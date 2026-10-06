@@ -68,6 +68,7 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `supabase/migrations/0005_expenses.sql` | — | Despesas do coach (Financeiro) |
 | `supabase/migrations/0006_assessment_review.sql` | — | Envio de fotos pelo aluno e avaliação pelo coach (status, comentário, medidas opcionais) |
 | `js/features/chat.js` | — | Telas do chat com o Supabase (lista de conversas, tempo real, não lidas) |
+| `js/features/painel.js` | — | Dashboard do coach: indicadores clicáveis, "Para fazer agora", recebido por mês com filtro de período, sessões e alunos com filtros |
 | `supabase/tests/` | — | Testes automáticos das regras de acesso (PostgreSQL local) |
 | `supabase/README.md` | — | Passo a passo para ligar o Supabase |
 | `docs/DOCUMENTACAO.md` | — | Este documento |
@@ -134,7 +135,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 
 | Tela | Endereço | O que faz |
 | --- | --- | --- |
-| Dashboard | `dashboard` | Alunos ativos, faturamento de 6 meses, aderência média, alunos em atenção |
+| Dashboard | `dashboard` | Indicadores clicáveis (alunos ativos, recebido no mês e quanto falta receber, aderência média, quem precisa de atenção). **Para fazer agora**: fotos para avaliar, pedidos de horário, cobranças atrasadas e mensagens não lidas, cada um com atalho. **Próximas sessões** (hoje ou 7 dias). **Recebido por mês** com filtro de 3, 6 ou 12 meses, valores nas barras, linha de média, total, média e melhor mês, e versão em tabela. **Alunos** com busca, plano, ordenação e filtros (precisam de atenção, pagamento atrasado, aderência abaixo de 60%), mostrando o motivo de cada alerta e um atalho para o chat |
 | Alunos | `alunos` | Lista com busca e filtro; cadastro de aluno; botão Editar para mudar plano, objetivo e status |
 | Fichas de treino | `fichas/<ficha>` | Criar, editar, reordenar, duplicar, excluir e copiar fichas de cada aluno |
 | Exercícios | `biblioteca/<exercício>` | Igual ao aluno, mais o campo para colar o link do vídeo (YouTube, Vimeo ou .mp4) |
@@ -180,7 +181,8 @@ Os scripts carregam da esquerda para a direita; `app.js` concentra o estado e é
 | `navBadge()` | Números no menu (mensagens; solicitações de agenda pendentes para o coach) |
 | `modal()` / `closeModal()` | Abre e fecha a janela sobreposta usada por formulários e detalhes |
 | `toast()` | Mensagem curta no rodapé da tela ("Treino finalizado!") |
-| `ring()`, `lineChart()`, `barChart()` | Desenham em SVG o anel da meta, as linhas de peso e gordura e as barras de faturamento |
+| `ring()`, `lineChart()` | Desenham em SVG o anel da meta e as linhas de peso e gordura |
+| `studentAlerts()`, `receivedChart()`, `dashTodo()` | painel.js: motivos de atenção de cada aluno, gráfico de recebido por mês e lista "Para fazer agora" |
 | `planOf()`, `myPlan()`, `todayWorkout()` | Fichas de um aluno e o treino do dia, pelo dia da semana da ficha |
 | `visibleSessions()`, `upcomingSessions()`, `sessionItem()` | Sessões da agenda visíveis para quem está logado e o item clicável de cada uma |
 | `esc()` | Protege textos digitados antes de colocá-los no HTML |
@@ -303,6 +305,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
+| 25 | `PENDING` | Dashboard do coach redesenhado: indicadores clicáveis, "Para fazer agora", gráfico de recebido com filtro de período e valores, sessões de hoje/7 dias e lista de alunos com busca, filtros e motivo dos alertas |
 | 24 | `3852445` | Avaliação por fotos: o aluno envia frente, lado e costas; o coach tem uma fila de envios, compara com as fotos anteriores, comenta (o comentário pode ir para o chat) e marca como avaliada |
 | 23 | `7ab6816` | Financeiro ampliado: indicadores, gráfico receitas x despesas, receber com forma de pagamento, cobrar no WhatsApp, recibo, editar/excluir, mensalidades em lote, cupom, exportar CSV e despesas |
 | 22 | `e04996a` | Vídeo de execução do Burpee (YouTube Shorts) já vem no site; Shorts aparecem num quadro vertical |

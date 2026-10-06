@@ -170,22 +170,6 @@ function lineChart(points, { suffix = '', decimals = 1 } = {}) {
     </svg>`;
 }
 
-function barChart(values, labels) {
-    const W = 600, H = 220, P = { l: 8, r: 8, t: 20, b: 28 };
-    const max = Math.max(...values, 1) * 1.1; // evita divisão por zero quando tudo é 0
-    const bw = (W - P.l - P.r) / values.length;
-    return `<svg class="chart" viewBox="0 0 ${W} ${H}">
-        ${values.map((v, i) => {
-            const h = (v / max) * (H - P.t - P.b);
-            const x = P.l + i * bw + bw * 0.2;
-            const last = i === values.length - 1;
-            return `<rect x="${x}" y="${H - P.b - h}" width="${bw * 0.6}" height="${h}" rx="6"
-                        style="fill:${last ? 'var(--accent)' : 'var(--border-hover)'}"><title>R$ ${v.toLocaleString('pt-BR')}</title></rect>
-                    <text x="${x + bw * 0.3}" y="${H - 8}" text-anchor="middle">${labels[i]}</text>`;
-        }).join('')}
-    </svg>`;
-}
-
 const SESSION_COLORS = { Presencial: 'accent', Online: 'blue', Avaliação: 'orange' };
 const STATUS_BADGE = { confirmada: ['green', 'Confirmada'], pendente: ['orange', 'Aguardando'], cancelada: ['red', 'Cancelada'] };
 
@@ -596,55 +580,8 @@ function allStudentsForList() {
     return [...SEED.students, ...(SEED.invites || [])];
 }
 
-// Soma das cobranças pagas em cada um dos últimos 6 meses
-function revenueLast6Months() {
-    return Array.from({ length: 6 }, (_, i) => {
-        const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - (5 - i));
-        const ym = localISO(d).slice(0, 7);
-        return state.invoices.filter(x => x.paidAt && x.paidAt.slice(0, 7) === ym).reduce((t, x) => t + x.amount, 0);
-    });
-}
-
 const trainerPages = {
-    dashboard: {
-        title: () => `Olá, ${esc(user.name.split(' ')[0])} 👋`,
-        sub: () => 'Visão geral dos seus alunos e do negócio.',
-        render() {
-            const st = SEED.students;
-            const active = st.filter(s => s.status !== 'Pendente');
-            const avg = active.length ? Math.round(active.reduce((t, s) => t + s.adherence, 0) / active.length) : 0;
-            const rev = revenueLast6Months();
-            const months = Array.from({ length: rev.length }, (_, i) => {
-                const d = new Date(); d.setMonth(d.getMonth() - (rev.length - 1 - i));
-                return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
-            });
-            const growth = rev.at(-2) ? ((rev.at(-1) / rev.at(-2)) - 1) * 100 : 0;
-            const todaySessions = upcomingSessions(4);
-            return `
-            <div class="grid grid-4">
-                <div class="card stat"><div class="label">Alunos ativos <span class="stat-ico">👥</span></div>
-                    <div class="value">${active.length}</div><div class="delta up">▲ 2 este mês</div></div>
-                <div class="card stat"><div class="label">Faturamento do mês <span class="stat-ico">💰</span></div>
-                    <div class="value"><small>R$</small> ${rev[rev.length - 1].toLocaleString('pt-BR')}</div>
-                    <div class="delta up">▲ ${num(growth)}% vs mês anterior</div></div>
-                <div class="card stat"><div class="label">Aderência média <span class="stat-ico">📊</span></div>
-                    <div class="value">${avg}<small>%</small></div>
-                    <div class="progress" style="margin-top:8px"><span style="width:${avg}%"></span></div></div>
-                <div class="card stat"><div class="label">Precisam de atenção <span class="stat-ico">⚠️</span></div>
-                    <div class="value">${st.filter(s => s.status !== 'Ativo').length}</div><div class="delta down">baixa frequência ou pagamento</div></div>
-            </div>
-            <div class="grid grid-main" style="margin-top:18px">
-                <div class="card"><div class="card-head"><h2>Faturamento (6 meses)</h2></div>${barChart(rev, months)}</div>
-                <div class="card"><div class="card-head"><h2>Próximas sessões</h2><a href="#/personal/agenda">Agenda →</a></div>
-                    <div class="list">${todaySessions.map(sessionItem).join('') || '<div class="empty">Nenhuma sessão agendada.</div>'}</div></div>
-            </div>
-            <div class="card" style="margin-top:18px">
-                <div class="card-head"><h2>Alunos</h2><a href="#/personal/alunos">Ver todos →</a></div>
-                ${studentsTable(st.slice(0, 4))}
-            </div>`;
-        }
-    },
-
+    // dashboard: js/features/painel.js
     alunos: {
         title: () => 'Alunos',
         sub: () => `${SEED.students.length} alunos cadastrados` + ((SEED.invites || []).length ? ` • ${SEED.invites.length} convite(s) pendente(s)` : ''),
