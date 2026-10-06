@@ -217,7 +217,7 @@ const Backend = (() => {
         state.invoices = invoices.map(r => ({
             id: r.id, student: nameOf(r.student_id), plan: r.plan, amount: num(r.amount), due: r.due, paidAt: r.paid_at, method: r.method
         }));
-        state.videos = Object.fromEntries(videos.map(r => [r.exercise_id, r.url]));
+        state.videos = { ...SEED.defaultVideos, ...Object.fromEntries(videos.map(r => [r.exercise_id, r.url])) };
         state.profile = { height: num(me.height_cm) || '', age: me.age || '', phone: me.phone || '', targetWeight: num(me.target_weight) };
         // Chat: últimas mensagens de todas as conversas que a pessoa pode ver
         state.chat = check(await sb.from('messages').select('*').order('created_at')).map(toChat);

@@ -49,7 +49,7 @@ select t_assert((select count(*) from profiles) = 1, 'aluna vê só o próprio p
 select t_assert((select count(*) from workout_plans) = 1, 'aluna vê só a própria ficha');
 select t_assert((select count(*) from sessions) = 1, 'aluna vê só a própria sessão');
 select t_assert((select count(*) from invoices) = 1, 'aluna vê a própria cobrança');
-select t_assert((select count(*) from exercise_videos) = 1, 'aluna vê os vídeos');
+select t_assert((select count(*) from exercise_videos) = 2, 'aluna vê os vídeos (o do coach + o do Burpee que já vem cadastrado)');
 select t_assert((select count(*) from busy_slots(current_date, current_date + 7)) = 2, 'busy_slots mostra horários ocupados de todos');
 
 update profiles set phone = '11999990000', age = 30 where id = :'ana';

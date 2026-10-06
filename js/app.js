@@ -34,7 +34,7 @@ const state = {
     // Fichas de treino por aluno: { 'Lucas Andrade': [ficha, ...] }
     plans: store.get('plans', { [CLIENT]: SEED.workouts.map(w => ({ ...w, notes: DEFAULT_NOTES })) }),
     // Link de vídeo por exercício da biblioteca: { 'supino-reto-com-barra': 'https://youtu.be/...' }
-    videos: store.get('videos', {}),
+    videos: { ...SEED.defaultVideos, ...store.get('videos', {}) },
     assessments: store.get('assessments', SEED.assessments),
     invoices: store.get('invoices', SEED.invoices),
     sessions: store.get('sessions', SEED.sessions)

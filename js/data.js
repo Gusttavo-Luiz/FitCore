@@ -158,6 +158,11 @@ SEED.library = [
     name, group, equipment, level, muscles, tips
 }));
 
+// Vídeos de execução que já vêm no site (o coach pode trocar ou adicionar outros)
+SEED.defaultVideos = {
+    burpee: 'https://youtube.com/shorts/aFSpzKujvZk'
+};
+
 // ---------- Avaliações físicas (por aluno) ----------
 SEED.assessments = {
     'Lucas Andrade': [

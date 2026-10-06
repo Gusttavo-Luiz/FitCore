@@ -6,7 +6,8 @@ let libFilter = { q: '', group: '' };
 function videoEmbed(url) {
     if (!url) return null;
     let m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/))([\w-]{11})/);
-    if (m) return { type: 'iframe', src: `https://www.youtube-nocookie.com/embed/${m[1]}` };
+    // Shorts são verticais: o quadro fica em pé
+    if (m) return { type: 'iframe', src: `https://www.youtube-nocookie.com/embed/${m[1]}`, vertical: /\/shorts\//.test(url) };
     m = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
     if (m) return { type: 'iframe', src: `https://player.vimeo.com/video/${m[1]}` };
     if (/^https:\/\/\S+\.(mp4|webm)(\?\S*)?$/i.test(url)) return { type: 'video', src: url };
@@ -24,7 +25,7 @@ function videoHtml(ex) {
         </div>`;
     }
     return v.type === 'iframe'
-        ? `<div class="video-frame"><iframe src="${esc(v.src)}" title="${esc(ex.name)}" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`
+        ? `<div class="video-frame${v.vertical ? ' vertical' : ''}"><iframe src="${esc(v.src)}" title="${esc(ex.name)}" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`
         : `<div class="video-frame"><video src="${esc(v.src)}" controls preload="metadata"></video></div>`;
 }
 
