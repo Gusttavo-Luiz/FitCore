@@ -490,8 +490,9 @@ const clientPages = {
                         <div class="list-item"><div class="grow muted">Plano</div><b>Performance</b></div>
                         <div class="list-item"><div class="grow muted">Valor</div><b>R$ 149/mês</b></div>
                         <div class="list-item"><div class="grow muted">Cobranças</div><a href="#/cliente/pagamentos" style="color:var(--accent)">Ver pagamentos →</a></div>
-                        <div class="list-item"><div class="grow muted">Personal</div><b>${SEED.trainer.name}</b></div>
-                        <div class="list-item"><div class="grow muted">Registro</div><b>${SEED.trainer.cref}</b></div>
+                        <div class="list-item"><div class="grow muted">Coach</div><b>${SEED.trainer.name}</b></div>
+                        ${SEED.trainer.cref ? `<div class="list-item"><div class="grow muted">Registro</div><b>${esc(SEED.trainer.cref)}</b></div>` : ''}
+                        <div class="list-item"><div class="grow muted">Instagram</div><a href="${SITE.instagram}" target="_blank" rel="noopener" style="color:var(--accent)">${SITE.instagramHandle} ↗</a></div>
                     </div>
                 </div>
             </div>`;
@@ -702,18 +703,19 @@ function route() {
     if (!pages[page]) page = 'dashboard';
     user.role = role;
 
-    $('#side-nav').innerHTML = `<div class="side-label">${role === 'personal' ? 'Personal' : 'Aluno'}</div>` +
+    $('#side-nav').innerHTML = `<div class="side-label">${role === 'personal' ? 'Coach' : 'Aluno'}</div>` +
         NAV[role].map(([id, ico, label]) => `<a class="side-link ${id === page ? 'active' : ''}" href="#/${role}/${id}">
             <span class="ico">${ico}</span>${label}${id === 'mensagens' ? '<span class="badge accent">2</span>' : ''}</a>`).join('') +
         `<div class="side-label">Alternar</div>
-         <a class="side-link" href="#/${role === 'personal' ? 'cliente' : 'personal'}/dashboard"><span class="ico">🔁</span>Ver como ${role === 'personal' ? 'aluno' : 'personal'}</a>`;
+         <a class="side-link" href="#/${role === 'personal' ? 'cliente' : 'personal'}/dashboard"><span class="ico">🔁</span>Ver como ${role === 'personal' ? 'aluno' : 'coach'}</a>`;
 
-    const name = role === 'personal' && user.name === 'Lucas Andrade' ? SEED.trainer.name
-        : role === 'cliente' && user.name === SEED.trainer.name ? 'Lucas Andrade' : user.name;
+    // Na demonstração, o painel do coach é sempre do Sidnei e a área do aluno é sempre do Lucas
+    const name = role === 'personal' ? SEED.trainer.name
+        : user.name === SEED.trainer.name || user.name === 'Carla Pereira' ? CLIENT : user.name;
     user.name = name;
     $('#user-avatar').textContent = initials(name);
     $('#user-name').textContent = name;
-    $('#user-role').textContent = role === 'personal' ? 'Personal Trainer' : 'Aluno • Performance';
+    $('#user-role').textContent = role === 'personal' ? 'Coach' : 'Aluno • Performance';
 
     const p = pages[page];
     $('#page-title').innerHTML = p.title();
@@ -726,7 +728,7 @@ function route() {
     if (p.bind) p.bind(view, param);
     closeModal();
     $('#sidebar').classList.remove('open');
-    document.title = `FitCore Pro — ${NAV[role].find(n => n[0] === page)[2]}`;
+    document.title = `Sidnei Muller Coach — ${NAV[role].find(n => n[0] === page)[2]}`;
 }
 
 $('#menu-toggle').onclick = () => $('#sidebar').classList.toggle('open');

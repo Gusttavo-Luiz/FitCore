@@ -1,4 +1,6 @@
-# FitCore Pro — Site para Personal Trainer
+# Sidnei Muller Coach — Site de consultoria online
+
+Repositório FitCore. Os dados do coach (Instagram, link do checkout, cupom) ficam em `js/config.js`.
 
 Site estático (HTML/CSS/JS puro, sem dependências) para consultoria de personal trainer.
 

@@ -1,6 +1,6 @@
 // Dados de exemplo da plataforma. Em produção viriam de uma API/banco de dados.
 const SEED = {
-    trainer: { name: 'Carla Pereira', cref: 'CREF 012345-G/SP' },
+    trainer: { name: SITE.coach, cref: '' }, // preencha o CREF quando tiver
 
     workouts: [
         {
@@ -82,7 +82,7 @@ const SEED = {
     sessions: [
         { date: offsetDate(0), time: '18:00', title: 'Treino presencial', type: 'Presencial', place: 'Academia Smart Fit — Centro' },
         { date: offsetDate(2), time: '07:30', title: 'Aula online — Funcional', type: 'Online', place: 'Google Meet' },
-        { date: offsetDate(5), time: '09:00', title: 'Avaliação física', type: 'Avaliação', place: 'Estúdio FitCore' },
+        { date: offsetDate(5), time: '09:00', title: 'Avaliação física', type: 'Avaliação', place: 'Online — Google Meet' },
         { date: offsetDate(9), time: '18:00', title: 'Treino presencial', type: 'Presencial', place: 'Academia Smart Fit — Centro' }
     ],
 
