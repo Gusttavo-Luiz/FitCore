@@ -22,7 +22,10 @@ function sessionsOn(date, { includeCancelled = true } = {}) {
 // Conflito de horário na agenda do coach (considera todos os alunos)
 function conflictWith(date, time, duration, ignoreId) {
     const a = toMin(time), b = a + duration;
-    return state.sessions.find(s => s.id !== ignoreId && s.status !== 'cancelada' && s.date === date &&
+    // Aluno com o Supabase: inclui os horários ocupados por outros alunos (sem nomes)
+    const others = (state.busySlots || []).filter(x => !state.sessions.some(s => s.id === x.id))
+        .map(x => ({ ...x, status: 'confirmada', title: 'Horário ocupado', student: '' }));
+    return [...state.sessions, ...others].find(s => s.id !== ignoreId && s.status !== 'cancelada' && s.date === date &&
         toMin(s.time) < b && a < toMin(s.time) + (s.duration || 60));
 }
 

@@ -2,6 +2,8 @@
 
 Repositório FitCore. Os dados do coach (Instagram, link do checkout, cupom) ficam em `js/config.js`.
 
+🗄️ **Backend:** Supabase (banco, login e fotos). Para ligar, siga [supabase/README.md](supabase/README.md); sem as chaves, o site roda em modo demonstração.
+
 📄 **Documentação completa:** [docs/DOCUMENTACAO.md](docs/DOCUMENTACAO.md) — tecnologias, estrutura de arquivos, funções, dados, publicação e histórico de mudanças.
 
 Site estático (HTML/CSS/JS puro, sem dependências) para consultoria de personal trainer.

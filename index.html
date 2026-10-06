@@ -9,8 +9,8 @@
     <meta name="description" content="Consultoria online de hipertrofia com Sidnei Muller. Construa seu físico treinando 1h por dia.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=202610061518">
-    <script src="js/config.js?v=202610061518"></script>
+    <link rel="stylesheet" href="css/style.css?v=202610061557">
+    <script src="js/config.js?v=202610061557"></script>
 </head>
 <body>
     <header class="nav">
@@ -115,36 +115,55 @@
 
     <div class="modal-backdrop" id="login-modal">
         <div class="modal">
-            <h3>Entrar</h3>
-            <p class="sub">Acesse a área do time.</p>
+            <h3 id="login-title">Entrar</h3>
+            <p class="sub" id="login-sub">Acesse a área do time.</p>
             <form id="login-form">
-                <div class="role-switch">
+                <!-- Demonstração: escolhe o perfil. Com o Supabase: entrar ou criar conta -->
+                <div class="role-switch" id="role-switch">
                     <button type="button" data-role="cliente" class="active">Aluno</button>
                     <button type="button" data-role="personal">Coach</button>
                 </div>
-                <label class="field">Nome
-                    <input class="input" name="name" placeholder="Seu nome" value="Lucas Andrade" required>
+                <div class="role-switch" id="mode-switch" hidden>
+                    <button type="button" data-mode="login" class="active">Entrar</button>
+                    <button type="button" data-mode="signup">Criar conta</button>
+                </div>
+                <label class="field" id="name-field">Nome
+                    <input class="input" name="name" placeholder="Seu nome completo" value="Lucas Andrade" autocomplete="name">
                 </label>
                 <label class="field">E-mail
-                    <input class="input" type="email" name="email" placeholder="voce@email.com" value="lucas@email.com" required>
+                    <input class="input" type="email" name="email" placeholder="voce@email.com" value="lucas@email.com" required autocomplete="email">
                 </label>
                 <label class="field">Senha
-                    <input class="input" type="password" name="password" placeholder="••••••••" value="123456" required>
+                    <input class="input" type="password" name="password" placeholder="••••••••" value="123456" required minlength="6" autocomplete="current-password">
                 </label>
-                <button class="btn btn-primary btn-block" type="submit">Entrar</button>
+                <p class="small" id="login-msg" hidden></p>
+                <button class="btn btn-primary btn-block" type="submit" id="login-submit">Entrar</button>
+                <button class="btn btn-ghost btn-block" type="button" id="forgot" hidden>Esqueci minha senha</button>
                 <button class="btn btn-ghost btn-block" type="button" id="close-login">Cancelar</button>
             </form>
         </div>
     </div>
 
+    <script src="js/backend.js?v=202610061557"></script>
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
 
         const modal = document.getElementById('login-modal');
         const form = document.getElementById('login-form');
-        const roleButtons = form.querySelectorAll('.role-switch button');
+        const msg = document.getElementById('login-msg');
+        const submit = document.getElementById('login-submit');
+        const roleButtons = form.querySelectorAll('#role-switch button');
+        const modeButtons = form.querySelectorAll('#mode-switch button');
         let role = 'cliente';
+        let mode = 'login';
 
+        function say(text, ok) {
+            msg.hidden = !text;
+            msg.textContent = text || '';
+            msg.className = 'small ' + (ok ? 'up' : 'down');
+        }
+
+        // Modo demonstração: nome e e-mail de exemplo, sem senha de verdade
         function setRole(r) {
             role = r;
             roleButtons.forEach(b => b.classList.toggle('active', b.dataset.role === r));
@@ -152,19 +171,74 @@
             form.email.value = r === 'personal' ? 'coach@email.com' : 'lucas@email.com';
         }
 
+        // Com o Supabase: entrar ou criar conta
+        function setMode(m) {
+            mode = m;
+            modeButtons.forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+            document.getElementById('name-field').hidden = m !== 'signup';
+            form.name.required = m === 'signup';
+            form.password.autocomplete = m === 'signup' ? 'new-password' : 'current-password';
+            document.getElementById('login-title').textContent = m === 'signup' ? 'Criar conta' : 'Entrar';
+            submit.textContent = m === 'signup' ? 'Criar conta' : 'Entrar';
+            document.getElementById('forgot').hidden = m === 'signup';
+            say('');
+        }
+
+        if (Backend.enabled) {
+            document.getElementById('role-switch').hidden = true;
+            document.getElementById('mode-switch').hidden = false;
+            document.getElementById('login-sub').textContent = 'Use seu e-mail e senha.';
+            form.name.value = form.email.value = form.password.value = '';
+            setMode('login');
+        }
+
         document.querySelectorAll('[data-open-login]').forEach(el => el.addEventListener('click', () => {
-            setRole(el.dataset.role || 'cliente');
+            if (!Backend.enabled) setRole(el.dataset.role || 'cliente');
             modal.classList.add('open');
         }));
         roleButtons.forEach(b => b.addEventListener('click', () => setRole(b.dataset.role)));
+        modeButtons.forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
         document.getElementById('close-login').onclick = () => modal.classList.remove('open');
         modal.addEventListener('click', e => { if (e.target === modal) modal.classList.remove('open'); });
 
-        form.addEventListener('submit', e => {
+        document.getElementById('forgot').onclick = async () => {
+            if (!form.email.value) return say('Digite seu e-mail primeiro.');
+            try {
+                await Backend.resetPassword(form.email.value.trim());
+                say('Enviamos um link para redefinir sua senha. Confira seu e-mail.', true);
+            } catch (err) { say(err.message); }
+        };
+
+        form.addEventListener('submit', async e => {
             e.preventDefault();
-            const user = { name: form.name.value.trim(), email: form.email.value.trim(), role };
-            try { localStorage.setItem('fitcore_user', JSON.stringify(user)); } catch (_) {}
-            location.href = 'app.html#/' + role + '/dashboard';
+            if (!Backend.enabled) {
+                const user = { name: form.name.value.trim(), email: form.email.value.trim(), role };
+                try { localStorage.setItem('fitcore_user', JSON.stringify(user)); } catch (_) {}
+                location.href = 'app.html#/' + role + '/dashboard';
+                return;
+            }
+            submit.disabled = true;
+            say('');
+            try {
+                const email = form.email.value.trim(), password = form.password.value;
+                if (mode === 'signup') {
+                    const needsConfirm = await Backend.signUp(form.name.value.trim(), email, password);
+                    if (needsConfirm) {
+                        say('Conta criada! Confirme pelo link que enviamos para o seu e-mail e depois entre.', true);
+                        setTimeout(() => setMode('login'), 4000);
+                        return;
+                    }
+                    await Backend.loadProfile();
+                } else {
+                    await Backend.signIn(email, password);
+                }
+                const u = Backend.siteUser(Backend.profile);
+                location.href = 'app.html#/' + u.role + '/dashboard';
+            } catch (err) {
+                say(err.message);
+            } finally {
+                submit.disabled = false;
+            }
         });
     </script>
 </body>

@@ -12,8 +12,9 @@ const store = {
     }
 };
 
-// Aluno usado na demonstração (a área do aluno sempre mostra os dados dele)
-const CLIENT = 'Lucas Andrade';
+// Aluno da área do aluno: na demonstração é sempre o Lucas; com o Supabase,
+// é quem fez login (definido em Backend.boot)
+let CLIENT = 'Lucas Andrade';
 const DEFAULT_NOTES = 'Controle a fase excêntrica (3 segundos na descida). Se completar todas as repetições com boa execução, aumente 2 kg na próxima sessão.';
 const WEEKDAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
@@ -48,6 +49,8 @@ function seedWorkoutDays() {
 }
 
 function save() {
+    // Com o Supabase ligado, os dados vão para o banco (não ficam no navegador)
+    if (Backend.enabled) { Backend.queueSync(); return true; }
     store.set('done', state.doneExercises);
     store.set('workoutDays', state.workoutDays);
     store.set('progress', state.progress);
@@ -166,7 +169,7 @@ function lineChart(points, { suffix = '', decimals = 1 } = {}) {
 
 function barChart(values, labels) {
     const W = 600, H = 220, P = { l: 8, r: 8, t: 20, b: 28 };
-    const max = Math.max(...values) * 1.1;
+    const max = Math.max(...values, 1) * 1.1; // evita divisão por zero quando tudo é 0
     const bw = (W - P.l - P.r) / values.length;
     return `<svg class="chart" viewBox="0 0 ${W} ${H}">
         ${values.map((v, i) => {
@@ -216,9 +219,15 @@ const clientPages = {
             const week = weekDays();
             const doneThisWeek = week.filter(d => state.workoutDays.includes(d)).length;
             const p = state.progress;
-            const first = p[0], last = p[p.length - 1];
-            const toGoal = last.weight - SEED.goal.weight;
-            const goalPct = (first.weight - last.weight) / (first.weight - SEED.goal.weight);
+            const first = p[0], last = p.at(-1);
+            // Meta: na demonstração vem dos dados de exemplo; com o Supabase, do perfil do aluno
+            const goal = Backend.enabled
+                ? { weight: state.profile.targetWeight, label: (Backend.profile && Backend.profile.goal) || 'Meta' }
+                : SEED.goal;
+            const hasGoal = last && goal.weight && first.weight !== goal.weight;
+            const toGoal = hasGoal ? last.weight - goal.weight : 0;
+            const goalPct = hasGoal ? Math.max(0, Math.min(1, (first.weight - last.weight) / (first.weight - goal.weight))) : 0;
+            const noData = '<div class="value">—</div><div class="muted small"><a href="#/cliente/evolucao">Registrar medição →</a></div>';
             const doneIdx = w ? (state.doneExercises[doneKey(w.id)] || []) : [];
             const next = upcomingSessions(3);
             const dayNames = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
@@ -226,11 +235,11 @@ const clientPages = {
             return `
             <div class="grid grid-4">
                 <div class="card stat"><div class="label">Peso atual <span class="stat-ico">⚖️</span></div>
-                    <div class="value">${num(last.weight)} <small>kg</small></div>
-                    <div class="delta up">▼ ${num(first.weight - last.weight)} kg desde o início</div></div>
+                    ${last ? `<div class="value">${num(last.weight)} <small>kg</small></div>
+                    <div class="delta ${last.weight <= first.weight ? 'up' : 'down'}">${last.weight <= first.weight ? '▼' : '▲'} ${num(Math.abs(first.weight - last.weight))} kg desde o início</div>` : noData}</div>
                 <div class="card stat"><div class="label">Gordura corporal <span class="stat-ico">🔥</span></div>
-                    <div class="value">${num(last.fat)} <small>%</small></div>
-                    <div class="delta up">▼ ${num(first.fat - last.fat)} p.p.</div></div>
+                    ${last ? `<div class="value">${num(last.fat)} <small>%</small></div>
+                    <div class="delta ${last.fat <= first.fat ? 'up' : 'down'}">${last.fat <= first.fat ? '▼' : '▲'} ${num(Math.abs(first.fat - last.fat))} p.p.</div>` : noData}</div>
                 <div class="card stat"><div class="label">Treinos na semana <span class="stat-ico">🏋️</span></div>
                     <div class="value">${doneThisWeek} <small>/ 5</small></div>
                     <div class="progress" style="margin-top:8px"><span style="width:${Math.min(100, doneThisWeek * 20)}%"></span></div></div>
@@ -263,12 +272,13 @@ const clientPages = {
                 </div>
 
                 <div class="card">
-                    <div class="card-head"><h2>Meta</h2><span class="badge accent">${esc(SEED.goal.label)}</span></div>
-                    <div class="ring-wrap">
+                    <div class="card-head"><h2>Meta</h2><span class="badge accent">${esc(goal.label)}</span></div>
+                    ${hasGoal ? `<div class="ring-wrap">
                         ${ring(goalPct, Math.round(goalPct * 100) + '%')}
-                        <div><div class="muted small">Faltam</div><b style="font-size:24px">${num(toGoal)} kg</b>
-                            <div class="muted small">para ${SEED.goal.weight} kg</div></div>
-                    </div>
+                        <div><div class="muted small">Faltam</div><b style="font-size:24px">${num(Math.abs(toGoal))} kg</b>
+                            <div class="muted small">para ${num(goal.weight)} kg</div></div>
+                    </div>` : `<div class="empty">Defina seu peso-meta no <a href="#/cliente/perfil" style="color:var(--accent)">perfil</a>
+                        e registre uma medição para acompanhar o progresso.</div>`}
                     <div class="card-head" style="margin:20px 0 10px"><h3>Esta semana</h3></div>
                     <div class="week">
                         ${week.map((d, i) => `<div class="day ${state.workoutDays.includes(d) ? 'done' : ''} ${d === today ? 'today' : ''}">
@@ -497,14 +507,15 @@ const clientPages = {
                         <label class="field">Altura (cm)<input class="input" type="number" name="height" value="${pr.height}"></label>
                         <label class="field">Idade<input class="input" type="number" name="age" value="${pr.age}"></label>
                         <label class="field">Telefone<input class="input" name="phone" value="${esc(pr.phone)}"></label>
+                        <label class="field">Peso-meta (kg)<input class="input" type="number" step="0.1" name="targetWeight" value="${pr.targetWeight ?? (Backend.enabled ? '' : SEED.goal.weight)}"></label>
                         <button class="btn btn-primary" type="submit">Salvar</button>
                     </form>
                 </div>
                 <div class="card">
                     <div class="card-head"><h2>Assinatura</h2><span class="badge green">Ativa</span></div>
                     <div class="list">
-                        <div class="list-item"><div class="grow muted">Plano</div><b>Performance</b></div>
-                        <div class="list-item"><div class="grow muted">Valor</div><b>R$ 149/mês</b></div>
+                        <div class="list-item"><div class="grow muted">Plano</div><b>${esc(myPlanName())}</b></div>
+                        <div class="list-item"><div class="grow muted">Valor</div><b>${money(SEED.planPrices[myPlanName()] || 0)}/mês</b></div>
                         <div class="list-item"><div class="grow muted">Cobranças</div><a href="#/cliente/pagamentos" style="color:var(--accent)">Ver pagamentos →</a></div>
                         <div class="list-item"><div class="grow muted">Coach</div><b>${SEED.trainer.name}</b></div>
                         ${SEED.trainer.cref ? `<div class="list-item"><div class="grow muted">Registro</div><b>${esc(SEED.trainer.cref)}</b></div>` : ''}
@@ -517,15 +528,28 @@ const clientPages = {
             const f = view.querySelector('#profile-form');
             f.onsubmit = e => {
                 e.preventDefault();
-                state.profile = { height: +f.height.value, age: +f.age.value, phone: f.phone.value };
+                state.profile = { height: +f.height.value, age: +f.age.value, phone: f.phone.value,
+                    targetWeight: f.targetWeight.value ? +f.targetWeight.value : null };
                 save(); toast('Perfil atualizado!');
             };
         }
     }
 };
 
+function myPlanName() {
+    return (Backend.enabled && Backend.profile && Backend.profile.plan) || 'Performance';
+}
+
 // ---------- Páginas compartilhadas ----------
 function renderChat() {
+    // O chat ainda não passa pelo banco: com o Supabase ligado, a conversa é pelo WhatsApp
+    if (Backend.enabled) {
+        return `<div class="card empty" style="padding:40px">
+            <p style="margin-bottom:16px">O chat dentro do app chega em breve.<br>Por enquanto, fale direto pelo WhatsApp.</p>
+            ${SITE.whatsapp ? `<a class="btn brand-wa" target="_blank" rel="noopener"
+                href="https://wa.me/${SITE.whatsapp.replace(/\D/g, '')}">Abrir WhatsApp</a>` : ''}
+        </div>`;
+    }
     const other = user.role === 'personal' ? 'Lucas Andrade' : SEED.trainer.name;
     return `
     <div class="card chat">
@@ -546,6 +570,7 @@ function renderChat() {
 }
 
 function bindChat(view) {
+    if (Backend.enabled) return;
     const body = view.querySelector('#chat-body');
     body.scrollTop = body.scrollHeight;
     const f = view.querySelector('#chat-form');
@@ -582,6 +607,15 @@ function studentsTable(list) {
     </table></div>`;
 }
 
+// Soma das cobranças pagas em cada um dos últimos 6 meses
+function revenueLast6Months() {
+    return Array.from({ length: 6 }, (_, i) => {
+        const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - (5 - i));
+        const ym = localISO(d).slice(0, 7);
+        return state.invoices.filter(x => x.paidAt && x.paidAt.slice(0, 7) === ym).reduce((t, x) => t + x.amount, 0);
+    });
+}
+
 const trainerPages = {
     dashboard: {
         title: () => `Olá, ${esc(user.name.split(' ')[0])} 👋`,
@@ -589,13 +623,13 @@ const trainerPages = {
         render() {
             const st = SEED.students;
             const active = st.filter(s => s.status !== 'Pendente');
-            const avg = Math.round(active.reduce((t, s) => t + s.adherence, 0) / active.length);
-            const rev = SEED.revenue;
+            const avg = active.length ? Math.round(active.reduce((t, s) => t + s.adherence, 0) / active.length) : 0;
+            const rev = Backend.enabled ? revenueLast6Months() : SEED.revenue;
             const months = Array.from({ length: rev.length }, (_, i) => {
                 const d = new Date(); d.setMonth(d.getMonth() - (rev.length - 1 - i));
                 return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
             });
-            const growth = ((rev[rev.length - 1] / rev[rev.length - 2]) - 1) * 100;
+            const growth = rev.at(-2) ? ((rev.at(-1) / rev.at(-2)) - 1) * 100 : 0;
             const todaySessions = upcomingSessions(4);
             return `
             <div class="grid grid-4">
@@ -636,7 +670,11 @@ const trainerPages = {
                 </div>
                 <div id="students">${studentsTable(SEED.students)}</div>
             </div>
-            <div class="card" style="margin-top:18px">
+            ${Backend.enabled ? `<div class="card" style="margin-top:18px">
+                <div class="card-head"><h2>Novo aluno</h2></div>
+                <p class="muted small">Envie o link do site para o aluno criar a conta em "Entrar → Criar conta".
+                Assim que ele se cadastrar, aparece nesta lista. Para mudar plano ou status, use o Supabase (tabela profiles).</p>
+            </div>` : `<div class="card" style="margin-top:18px">
                 <div class="card-head"><h2>Cadastrar aluno</h2></div>
                 <form id="student-form" class="form-row">
                     <label class="field">Nome<input class="input" name="name" required></label>
@@ -644,7 +682,7 @@ const trainerPages = {
                     <label class="field">Objetivo<select class="input" name="goal"><option>Hipertrofia</option><option>Emagrecimento</option><option>Condicionamento</option><option>Saúde</option></select></label>
                     <button class="btn btn-primary" type="submit">Adicionar</button>
                 </form>
-            </div>`;
+            </div>`}`;
         },
         bind(view) {
             const search = view.querySelector('#search'), filter = view.querySelector('#filter');
@@ -655,7 +693,7 @@ const trainerPages = {
             };
             search.oninput = update; filter.onchange = update;
             const f = view.querySelector('#student-form');
-            f.onsubmit = e => {
+            if (f) f.onsubmit = e => {
                 e.preventDefault();
                 SEED.students.push({ name: f.name.value.trim(), plan: f.plan.value, goal: f.goal.value, adherence: 0, lastWorkout: '—', status: 'Pendente', due: '—' });
                 store.set('students', SEED.students);
@@ -697,6 +735,8 @@ function route() {
     // Formato: #/cliente/dashboard ou #/cliente/treinos/A
     let [, role, page, param, extra] = location.hash.split('/');
     if (role !== 'cliente' && role !== 'personal') role = user.role || 'cliente';
+    // Com login de verdade, cada um vê só a própria área
+    if (Backend.enabled) role = user.role;
     const pages = role === 'personal' ? trainerPages : clientPages;
     if (!pages[page]) page = 'dashboard';
     user.role = role;
@@ -704,16 +744,16 @@ function route() {
     $('#side-nav').innerHTML = `<div class="side-label">${role === 'personal' ? 'Coach' : 'Aluno'}</div>` +
         NAV[role].map(([id, ico, label]) => `<a class="side-link ${id === page ? 'active' : ''}" href="#/${role}/${id}">
             <span class="ico">${ico}</span>${label}${navBadge(role, id)}</a>`).join('') +
-        `<div class="side-label">Alternar</div>
-         <a class="side-link" href="#/${role === 'personal' ? 'cliente' : 'personal'}/dashboard"><span class="ico">🔁</span>Ver como ${role === 'personal' ? 'aluno' : 'coach'}</a>`;
+        (Backend.enabled ? '' : `<div class="side-label">Alternar</div>
+         <a class="side-link" href="#/${role === 'personal' ? 'cliente' : 'personal'}/dashboard"><span class="ico">🔁</span>Ver como ${role === 'personal' ? 'aluno' : 'coach'}</a>`);
 
     // Na demonstração, o painel do coach é sempre do Sidnei e a área do aluno é sempre do Lucas
-    const name = role === 'personal' ? SEED.trainer.name
+    const name = Backend.enabled ? user.name : role === 'personal' ? SEED.trainer.name
         : user.name === SEED.trainer.name || user.name === 'Carla Pereira' ? CLIENT : user.name;
     user.name = name;
     $('#user-avatar').textContent = initials(name);
     $('#user-name').textContent = name;
-    $('#user-role').textContent = role === 'personal' ? 'Coach' : 'Aluno • Performance';
+    $('#user-role').textContent = role === 'personal' ? 'Coach' : 'Aluno • ' + myPlanName();
 
     const p = pages[page];
     $('#page-title').innerHTML = p.title();
@@ -730,10 +770,29 @@ function route() {
 }
 
 $('#menu-toggle').onclick = () => $('#sidebar').classList.toggle('open');
-$('#logout').onclick = () => {
+$('#logout').onclick = async () => {
     try { localStorage.removeItem('fitcore_user'); } catch (_) {}
+    if (Backend.enabled) {
+        try { await Backend.flush(); await Backend.signOut(); } catch (err) { console.error(err); }
+    }
     location.href = 'index.html';
 };
 window.addEventListener('hashchange', () => { window.scrollTo(0, 0); route(); });
-// As telas de js/features/ registram suas páginas antes da primeira renderização
-window.addEventListener('DOMContentLoaded', route);
+
+// Início: com o Supabase, carrega a conta e os dados antes de desenhar a primeira tela.
+// As telas de js/features/ registram suas páginas antes disso (DOMContentLoaded).
+async function boot() {
+    if (!Backend.enabled) return route();
+    $('#view').innerHTML = '<div class="card empty">Carregando seus dados…</div>';
+    try {
+        if (!(await Backend.boot())) { location.href = 'index.html'; return; }
+        Object.assign(user, Backend.siteUser(Backend.profile));
+        SEED.trainer.name = SITE.coach;
+        route();
+    } catch (err) {
+        console.error(err);
+        $('#view').innerHTML = `<div class="card empty">Não foi possível carregar seus dados.<br>${esc(err.message)}<br><br>
+            <button class="btn" onclick="location.reload()">Tentar de novo</button></div>`;
+    }
+}
+window.addEventListener('DOMContentLoaded', boot);

@@ -179,6 +179,10 @@ clientPages.avaliacao = {
 trainerPages.avaliacoes = {
     title: () => 'Avaliações físicas',
     sub: () => 'Medidas e fotos dos seus alunos',
-    render: () => renderAssessments(evalStudent),
-    bind: view => bindAssessments(view, evalStudent)
+    render: () => {
+        if (!SEED.students.some(s => s.name === evalStudent)) evalStudent = (SEED.students[0] || {}).name || '';
+        if (!evalStudent) return '<div class="card empty">Nenhum aluno cadastrado ainda.</div>';
+        return renderAssessments(evalStudent);
+    },
+    bind: view => { if (evalStudent) bindAssessments(view, evalStudent); }
 };

@@ -10,6 +10,11 @@ const SITE = {
     // WhatsApp com DDI + DDD, só números (ex.: '5511999999999'). Vazio = botões escondidos.
     whatsapp: '5511921410448', // número de exemplo: trocar pelo do Sidnei
     whatsappMessage: 'Olá, Sidnei! Vim pelo site e quero saber mais sobre a consultoria.',
+    // Supabase (banco de dados e login). Supabase → Project Settings → API.
+    // Vazios = modo demonstração (dados de exemplo, salvos só no navegador).
+    // A chave "anon" pode ficar pública: quem protege os dados são as regras do banco (RLS).
+    supabaseUrl: '',
+    supabaseAnonKey: '',
     coupon: 'CHAMP',
     couponDiscount: '15%'
 };

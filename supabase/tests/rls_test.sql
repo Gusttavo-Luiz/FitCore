@@ -1,0 +1,113 @@
+-- Testes das regras de acesso (RLS). Rodar num banco com supabase_stub.sql + a migração.
+-- Cada verificação lança erro se falhar; ao final imprime "TODOS OS TESTES PASSARAM".
+\set ON_ERROR_STOP on
+\set coach '11111111-1111-1111-1111-111111111111'
+\set ana   '22222222-2222-2222-2222-222222222222'
+\set bruno '33333333-3333-3333-3333-333333333333'
+
+create or replace function public.t_assert(ok boolean, msg text) returns void language plpgsql as
+$$ begin if not coalesce(ok, false) then raise exception 'FALHOU: %', msg; end if; raise notice 'ok: %', msg; end $$;
+grant execute on function public.t_assert(boolean, text) to authenticated;
+-- Espera que o comando seja recusado
+create or replace function public.t_denied(cmd text, msg text) returns void language plpgsql as
+$$ begin execute cmd; raise exception 'FALHOU (deveria ser recusado): %', msg;
+   exception when insufficient_privilege or raise_exception or check_violation then
+       if sqlerrm like 'FALHOU%' then raise; end if; raise notice 'ok (recusado): %', msg; end $$;
+grant execute on function public.t_denied(text, text) to authenticated;
+
+-- Cadastro: o gatilho cria os perfis como 'aluno'
+insert into auth.users (id, email, raw_user_meta_data) values
+  (:'coach', 'sidnei@exemplo.com', '{"full_name":"Sidnei Muller"}'),
+  (:'ana',   'ana@exemplo.com',    '{"full_name":"Ana Lima"}'),
+  (:'bruno', 'bruno@exemplo.com',  '{"full_name":"Bruno Reis"}');
+select t_assert((select count(*) from profiles where role = 'aluno') = 3, 'cadastro cria 3 perfis de aluno');
+select t_assert((select full_name from profiles where id = :'ana') = 'Ana Lima', 'nome vem do cadastro');
+update profiles set role = 'coach' where email = 'sidnei@exemplo.com';  -- feito no SQL Editor (sem usuário logado)
+select t_assert((select role from profiles where id = :'coach') = 'coach', 'SQL Editor promove o coach');
+
+-- ===== Coach =====
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'coach', false);
+select t_assert(is_coach(), 'is_coach() verdadeiro para o coach');
+select t_assert((select count(*) from profiles) = 3, 'coach vê todos os perfis');
+insert into workout_plans (id, student_id, name, exercises) values
+  ('fa1', :'ana', 'Treino A', '[{"name":"Supino reto com barra","sets":4,"reps":"10","load":"60 kg","rest":"90s"}]'),
+  ('fb1', :'bruno', 'Treino A', '[]');
+insert into sessions (id, student_id, date, time, type, title, status) values
+  ('s-ana', :'ana', current_date + 1, '18:00', 'Presencial', 'Treino', 'confirmada'),
+  ('s-bruno', :'bruno', current_date + 1, '19:00', 'Online', 'Aula', 'confirmada');
+insert into invoices (id, student_id, plan, amount, due) values ('i-ana', :'ana', 'Performance', 149, current_date + 5);
+insert into exercise_videos values ('supino-reto-com-barra', 'https://youtu.be/abcdefghijk');
+update profiles set plan = 'Premium', status = 'Atenção' where id = :'ana';
+select t_assert((select plan from profiles where id = :'ana') = 'Premium', 'coach altera plano do aluno');
+select t_denied($$insert into exercise_videos values ('x', 'http://inseguro')$$, 'vídeo precisa ser https');
+
+-- ===== Aluna Ana =====
+select set_config('request.jwt.claim.sub', :'ana', false);
+select t_assert(not is_coach(), 'is_coach() falso para aluna');
+select t_assert((select count(*) from profiles) = 1, 'aluna vê só o próprio perfil');
+select t_assert((select count(*) from workout_plans) = 1, 'aluna vê só a própria ficha');
+select t_assert((select count(*) from sessions) = 1, 'aluna vê só a própria sessão');
+select t_assert((select count(*) from invoices) = 1, 'aluna vê a própria cobrança');
+select t_assert((select count(*) from exercise_videos) = 1, 'aluna vê os vídeos');
+select t_assert((select count(*) from busy_slots(current_date, current_date + 7)) = 2, 'busy_slots mostra horários ocupados de todos');
+
+update profiles set phone = '11999990000', age = 30 where id = :'ana';
+select t_assert((select phone from profiles where id = :'ana') = '11999990000', 'aluna edita telefone e idade');
+select t_denied(format($$update profiles set role = 'coach' where id = %L$$, :'ana'), 'aluna não vira coach');
+select t_denied(format($$update profiles set plan = 'Essencial' where id = %L$$, :'ana'), 'aluna não muda o próprio plano');
+update profiles set full_name = 'Hackeado' where id = :'bruno';
+select t_assert(true, 'update no perfil do Bruno não dá erro mas não afeta linhas');
+
+update workout_plans set name = 'X';  -- RLS: nenhuma linha atualizada
+select t_assert((select name from workout_plans where id = 'fa1') = 'Treino A', 'aluna não edita ficha (continua igual)');
+
+insert into workout_logs values (:'ana', 'fa1', current_date, '{0,2}');
+insert into workout_days values (:'ana', current_date);
+insert into progress_entries values (:'ana', current_date, 80.5, 18.2, 85);
+insert into assessments (id, student_id, date, weight, fat, chest, waist, hip, arm, thigh, photos)
+  values ('av-ana', :'ana', current_date, 80.5, 18.2, 100, 85, 98, 36, 58, format('{"front":"%s/av-ana-front.jpg"}', :'ana')::jsonb);
+select t_assert((select count(*) from progress_entries) = 1, 'aluna registra a própria evolução');
+select t_denied(format($$insert into progress_entries values (%L, current_date, 1, 1, 1)$$, :'bruno'), 'aluna não grava evolução de outro aluno');
+
+insert into sessions (id, student_id, date, time, type, title, status) values ('s-pedido', :'ana', current_date + 2, '07:00', 'Online', 'Pedido', 'pendente');
+select t_assert(true, 'aluna solicita horário (pendente)');
+select t_denied(format($$insert into sessions (student_id, date, time, type, title, status) values (%L, current_date + 3, '08:00', 'Online', 'X', 'confirmada')$$, :'ana'), 'aluna não cria sessão já confirmada');
+select t_denied(format($$insert into sessions (student_id, date, time, type, title, status) values (%L, current_date + 3, '08:00', 'Online', 'X', 'pendente')$$, :'bruno'), 'aluna não agenda para outro aluno');
+update sessions set time = '06:00', status = 'pendente' where id = 's-ana';
+select t_assert((select status from sessions where id = 's-ana') = 'pendente', 'aluna remarca (volta a pendente)');
+select t_denied($$update sessions set status = 'confirmada' where id = 's-pedido'$$, 'aluna não confirma a própria sessão');
+update sessions set status = 'cancelada' where id = 's-pedido';
+select t_assert((select status from sessions where id = 's-pedido') = 'cancelada', 'aluna cancela');
+delete from sessions where id = 's-ana';
+select t_assert((select count(*) from sessions where id = 's-ana') = 1, 'aluna não exclui sessão (nenhuma linha apagada)');
+
+update invoices set paid_at = current_date;  -- RLS: nenhuma linha atualizada
+select t_assert((select paid_at from invoices where id = 'i-ana') is null, 'aluna não marca cobrança como paga');
+select t_denied($$insert into exercise_videos values ('y', 'https://youtu.be/xxxxxxxxxxx')$$, 'aluna não altera vídeos');
+
+insert into storage.objects (bucket_id, name) values ('assessment-photos', :'ana' || '/av-ana-front.jpg');
+select t_assert(true, 'aluna envia foto na própria pasta');
+select t_denied(format($$insert into storage.objects (bucket_id, name) values ('assessment-photos', '%s/x.jpg')$$, :'bruno'), 'aluna não envia foto na pasta de outro');
+
+-- ===== Aluno Bruno =====
+select set_config('request.jwt.claim.sub', :'bruno', false);
+select t_assert((select full_name from profiles) = 'Bruno Reis', 'nome do Bruno não foi alterado pela Ana');
+select t_assert((select count(*) from assessments) = 0, 'Bruno não vê avaliação da Ana');
+select t_assert((select count(*) from storage.objects) = 0, 'Bruno não vê fotos da Ana');
+select t_assert((select count(*) from workout_logs) = 0, 'Bruno não vê treinos da Ana');
+
+-- ===== Sem login =====
+select set_config('request.jwt.claim.sub', '', false);
+select t_assert((select count(*) from sessions) = 0, 'sem login não vê nada');
+select t_assert((select count(*) from busy_slots(current_date, current_date + 7)) = 0, 'busy_slots vazio sem login');
+
+-- ===== Coach de novo =====
+select set_config('request.jwt.claim.sub', :'coach', false);
+update sessions set status = 'confirmada' where id = 's-ana';
+update invoices set paid_at = current_date, method = 'Pix' where id = 'i-ana';
+select t_assert((select count(*) from assessments) = 1 and (select count(*) from storage.objects) = 1, 'coach vê avaliação e fotos da Ana');
+delete from sessions where id = 's-pedido';
+select t_assert((select count(*) from sessions) = 2, 'coach confirma, marca pago e exclui');
+reset role;
+\echo TODOS OS TESTES PASSARAM

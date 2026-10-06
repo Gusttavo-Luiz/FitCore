@@ -11,6 +11,8 @@ trainerPages.fichas = {
     title: () => 'Fichas de treino',
     sub: () => 'Monte e ajuste as fichas de cada aluno',
     render(id) {
+        if (!SEED.students.some(s => s.name === fichaStudent)) fichaStudent = (SEED.students[0] || {}).name || '';
+        if (!fichaStudent) return '<div class="card empty">Nenhum aluno cadastrado ainda.</div>';
         const plan = planOf(fichaStudent);
         const w = plan.find(x => x.id === id) || plan[0];
         const toolbar = `
@@ -79,6 +81,7 @@ trainerPages.fichas = {
         </div>`;
     },
     bind(view, id) {
+        if (!fichaStudent) return;
         const plan = planOf(fichaStudent);
         const w = plan.find(x => x.id === id) || plan[0];
         // Salva e re-renderiza (mudar o hash já dispara a navegação)

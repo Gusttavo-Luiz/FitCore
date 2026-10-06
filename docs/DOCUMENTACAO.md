@@ -4,7 +4,7 @@ Atualizado em 06/10/2026
 
 ## Visão geral
 
-O projeto é o site de consultoria online do coach **Sidnei Muller**: uma página de vendas e uma área logada (app) para alunos e para o coach. Ele é estático, publicado gratuitamente no GitHub Pages, e não depende de servidor nem de banco de dados.
+O projeto é o site de consultoria online do coach **Sidnei Muller**: uma página de vendas e uma área logada (app) para alunos e para o coach. Ele é estático, publicado gratuitamente no GitHub Pages. O backend é o **Supabase** (banco PostgreSQL, login e armazenamento de fotos): enquanto as chaves não forem configuradas, o site roda em modo demonstração.
 
 | Item | Valor |
 | --- | --- |
@@ -28,13 +28,15 @@ O site usa só as três linguagens nativas do navegador, sem framework, sem etap
 | CSS3 | Todo o visual em um arquivo, com variáveis de cor (`:root`), Grid, Flexbox e media queries |
 | JavaScript (ES2020+, "vanilla") | Telas da área logada, navegação, formulários, gráficos e agenda |
 | SVG | Gráficos de peso, faturamento e anel de meta, desenhados à mão no código; ícone do site e logos de Instagram e WhatsApp |
-| localStorage | Onde os dados do usuário ficam salvos, no próprio navegador |
+| Supabase (PostgreSQL + Auth + Storage) | Backend: login, banco de dados com regras de acesso (RLS) e fotos das avaliações. Ver [supabase/README.md](../supabase/README.md) |
+| SQL | Esquema do banco e regras de acesso (`supabase/migrations/0001_schema.sql`) |
+| localStorage | No modo demonstração, onde os dados ficam salvos, no próprio navegador |
 | Canvas API | Reduz as fotos das avaliações para 480 px antes de salvar |
 | Google Fonts | Fonte Inter |
 | GitHub Pages | Hospedagem gratuita, publicada a cada envio para a `main` |
 | Git e GitHub | Controle de versões |
 
-Não há back-end. Login, pagamentos e mensagens funcionam como demonstração, sem enviar dados para nenhum servidor.
+Sem as chaves do Supabase, nada é enviado para servidor: login, pagamentos e mensagens funcionam como demonstração. Com as chaves, login e dados passam a ser reais (veja **Backend (Supabase)**).
 
 ## Estrutura de arquivos
 
@@ -47,7 +49,8 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `css/style.css` | 483 | Todo o visual das duas páginas |
 | `js/config.js` | 33 | Dados do coach: Instagram, WhatsApp, checkout e cupom |
 | `js/data.js` | 196 | Dados de exemplo: treinos, dieta, alunos, exercícios, avaliações, cobranças e sessões |
-| `js/app.js` | 739 | Núcleo: estado, salvamento, navegação, gráficos e as telas básicas |
+| `js/app.js` | 798 | Núcleo: estado, salvamento, navegação, gráficos e as telas básicas |
+| `js/backend.js` | 309 | Ligação com o Supabase: login, carregamento e sincronização dos dados |
 | `js/features/biblioteca.js` | 116 | Biblioteca de exercícios com vídeos |
 | `js/features/fichas.js` | 146 | Fichas de treino por aluno (coach) |
 | `js/features/avaliacao.js` | 184 | Avaliação física com fotos |
@@ -57,9 +60,12 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `assets/sidnei.jpg` | — | Foto do coach na seção Sobre |
 | `.nojekyll` | — | Faz o GitHub Pages publicar os arquivos sem processá-los |
 | `README.md` | — | Resumo do projeto |
+| `supabase/migrations/0001_schema.sql` | — | Tabelas, regras de acesso (RLS) e Storage do banco |
+| `supabase/tests/` | — | Testes automáticos das regras de acesso (PostgreSQL local) |
+| `supabase/README.md` | — | Passo a passo para ligar o Supabase |
 | `docs/DOCUMENTACAO.md` | — | Este documento |
 
-Os scripts da área logada carregam nesta ordem: `config.js` → `data.js` → `app.js` → `features/*.js`. A ordem importa, porque cada arquivo usa o que o anterior definiu.
+Os scripts da área logada carregam nesta ordem: `config.js` → `data.js` → `app.js` → `backend.js` → `features/*.js`. A ordem importa, porque cada arquivo usa o que o anterior definiu.
 
 ## Configuração do site (js/config.js)
 
@@ -74,6 +80,7 @@ Links e dados de contato do coach ficam todos no objeto `SITE`, em `js/config.js
 | `checkout` | vazio | Botões "Quero entrar pro time". Vazio = levam ao Instagram |
 | `whatsapp` | 5511921410448 (exemplo) | Botão "Tirar dúvidas no WhatsApp" e botão flutuante. Vazio = botões somem |
 | `whatsappMessage` | "Olá, Sidnei! Vim pelo site…" | Mensagem já escrita ao abrir o WhatsApp |
+| `supabaseUrl` / `supabaseAnonKey` | vazios | Ligam o backend. Vazios = modo demonstração |
 | `coupon` | CHAMP | Cupom mostrado na página |
 | `couponDiscount` | 15% | Desconto mostrado ao lado do cupom |
 
@@ -188,9 +195,36 @@ Os scripts carregam da esquerda para a direita; `app.js` concentra o estado e é
 
 **Configuração (`js/config.js`):** o objeto `SITE` e o preenchimento automático dos links com `data-link`.
 
+## Backend (Supabase)
+
+O backend usa o Supabase: banco PostgreSQL, login por e-mail e senha e armazenamento de fotos. O site continua no GitHub Pages e fala direto com o Supabase. A segurança fica nas regras de acesso do banco (Row Level Security): o aluno só lê e grava os próprios dados, e o coach acessa os de todos.
+
+**Como ligar:** siga [supabase/README.md](../supabase/README.md). São seis passos: criar o projeto, rodar o SQL, configurar o login, colar as duas chaves em `js/config.js`, tornar o Sidnei coach e publicar.
+
+**Como o site usa o banco (`js/backend.js`):**
+
+1. **Login:** a janela "Entrar" ganha as abas *Entrar* e *Criar conta*, com mensagens de erro em português e "Esqueci minha senha". Toda conta nova nasce como aluno.
+2. **Carregamento:** ao abrir `app.html`, `Backend.boot()` confere o login (sem login, volta para a página inicial) e carrega fichas, treinos, medições, avaliações, agenda, cobranças e vídeos para o objeto `state`.
+3. **Salvamento:** as telas não mudaram. Elas alteram `state` e chamam `save()`, que agora chama `Backend.queueSync()`. A sincronização compara cada coleção com o último estado do banco e envia só o que mudou: inclusões, alterações e exclusões.
+4. **Fotos:** vão para o Storage na pasta do aluno. O banco guarda o caminho, e na hora de exibir o site gera links temporários de 6 horas.
+
+**Mudanças de comportamento com o Supabase ligado:**
+
+| Tela | Demonstração | Com Supabase |
+| --- | --- | --- |
+| Menu | Botão "Ver como coach / aluno" | Cada um vê só a própria área |
+| Agenda (aluno) | Conflito com as sessões de exemplo | Conflito com os horários ocupados de todos, sem nomes (`busy_slots`) |
+| Pagamentos (aluno) | Pagamento simulado | "Pagar" leva ao checkout; o coach marca como pago |
+| Alunos (coach) | Formulário de cadastro | O aluno cria a própria conta e aparece na lista |
+| Dashboard do coach | Faturamento de exemplo | Soma das cobranças pagas por mês |
+| Dashboard do aluno | Meta de exemplo (78 kg) | Peso-meta definido pelo aluno no Perfil |
+| Mensagens | Chat de demonstração | Leva ao WhatsApp (chat no banco ainda não feito) |
+
+**Testes:** 40 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 24 verificações: cadastro, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino e pagamento.
+
 ## Dados e armazenamento
 
-Os dados ficam no `localStorage` do navegador de quem usa: cada pessoa e cada aparelho têm a sua cópia, e nada é compartilhado entre aluno e coach. Na primeira visita, o site parte dos exemplos de `js/data.js`.
+No **modo demonstração**, os dados ficam no `localStorage` do navegador de quem usa: cada pessoa e cada aparelho têm a sua cópia, e nada é compartilhado entre aluno e coach. Na primeira visita, o site parte dos exemplos de `js/data.js`. Com o **Supabase** ligado, os mesmos dados vão para as tabelas descritas em [supabase/README.md](../supabase/README.md), e só o login fica no navegador.
 
 | Chave (`fitcore_` + …) | Conteúdo |
 | --- | --- |
@@ -257,7 +291,8 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
-| 16 | — | Esta documentação adicionada ao repositório (`docs/DOCUMENTACAO.md`) |
+| 17 | — | Backend com Supabase: esquema do banco com regras de acesso (RLS) e Storage, login e cadastro reais, sincronização dos dados, guia de configuração e testes |
+| 16 | `bb1dc42` | Esta documentação adicionada ao repositório (`docs/DOCUMENTACAO.md`) |
 | 15 | `e09fa1b` | Removida a faixa "Feedbacks e evolução do time" e o link Feedbacks do menu |
 | 14 | `bcde158` | Mantidos só os botões de WhatsApp e Instagram da caixa do cupom e o botão flutuante; saíram os do rodapé, da faixa de feedbacks e do menu lateral |
 | 13 | `24afe90` | Removidos os botões de Instagram e WhatsApp do topo e da seção Sobre |
@@ -278,12 +313,13 @@ Os itens 1 a 3 aconteceram no repositório [Gusttavo-Luiz/QR-Code-Wi-fi](https:/
 
 ## Limitações, pendências e próximos passos
 
-A maior limitação é não ter servidor: aluno e coach não compartilham dados. Uma solicitação de horário feita no celular do aluno não chega ao coach.
+O backend está pronto, mas ainda desligado: enquanto as chaves do Supabase não forem configuradas, aluno e coach não compartilham dados.
 
 **Limitações atuais**
 
-- Login sem senha real; qualquer pessoa entra como aluno ou coach.
-- Dados só no navegador de cada pessoa, com limite de cerca de 5 MB.
+- Modo demonstração (enquanto o Supabase não for ligado): login sem senha real e dados só no navegador.
+- Chat, dieta e água ainda não passam pelo banco.
+- O coach não cadastra aluno pelo site: o aluno cria a própria conta.
 - Pagamentos simulados: nenhum valor é cobrado.
 - Chat com respostas automáticas de demonstração.
 - Vídeos dos exercícios não vêm prontos; o coach cola o link de cada um.
@@ -298,10 +334,11 @@ A maior limitação é não ter servidor: aluno e coach não compartilham dados.
 - [ ] CREF, se houver
 - [ ] Confirmar se o cupom CHAMP dá 15% em toda a consultoria
 - [ ] Revisão do texto "Sobre o coach" pelo Sidnei
+- [ ] Criar o projeto no Supabase e colar as chaves em `js/config.js` (passo a passo em `supabase/README.md`)
 
 **Próximos passos técnicos sugeridos**
 
-1. Banco de dados e login reais (Supabase ou Firebase), para aluno e coach verem os mesmos dados.
+1. Ligar o Supabase e levar chat, dieta e água para o banco.
 2. Pagamento real pela Prime Coaching ou por outro provedor (Mercado Pago, Stripe).
 3. Notificações por WhatsApp ou e-mail quando uma sessão for solicitada ou confirmada.
 4. Domínio próprio (ex.: sidneimuller.com.br) apontando para o GitHub Pages.

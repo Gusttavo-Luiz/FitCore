@@ -77,7 +77,9 @@ clientPages.pagamentos = {
                 <div class="list-item">
                     <div class="grow"><div class="title">Mensalidade ${i.plan}</div><div class="meta">Vence em ${fmtFull(i.due)}</div></div>
                     <span class="badge ${st.color}">${st.label}</span><b>${money(i.amount)}</b>
-                    <button class="btn btn-primary btn-sm" data-pay="${i.id}">Pagar</button>
+                    ${Backend.enabled
+                        ? `<a class="btn btn-primary btn-sm" data-link="checkout" target="_blank" rel="noopener" href="${SITE.checkout || SITE.instagram}">Pagar</a>`
+                        : `<button class="btn btn-primary btn-sm" data-pay="${i.id}">Pagar</button>`}
                 </div>`; }).join('')}</div>
         </div>` : ''}
         <div class="card" style="margin-top:18px">
