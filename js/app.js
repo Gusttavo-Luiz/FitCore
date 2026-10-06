@@ -34,7 +34,8 @@ const state = {
     // Link de vídeo por exercício da biblioteca: { 'supino-reto-com-barra': 'https://youtu.be/...' }
     videos: store.get('videos', {}),
     assessments: store.get('assessments', SEED.assessments),
-    invoices: store.get('invoices', SEED.invoices)
+    invoices: store.get('invoices', SEED.invoices),
+    sessions: store.get('sessions', SEED.sessions)
 };
 
 function seedWorkoutDays() {
@@ -56,6 +57,7 @@ function save() {
     store.set('plans', state.plans);
     store.set('videos', state.videos);
     store.set('invoices', state.invoices);
+    store.set('sessions', state.sessions);
     // Avaliações têm fotos e podem estourar o limite do navegador
     if (!store.set('assessments', state.assessments)) {
         toast('Armazenamento do navegador cheio: remova fotos antigas.');
@@ -95,11 +97,13 @@ function libByName(name) {
     return SEED.library.find(e => e.name.toLowerCase() === String(name).toLowerCase());
 }
 
-function modal(html) {
+function modal(html, onClose) {
     const root = $('#modal');
     root.innerHTML = `<div class="modal">${html}</div>`;
     root.classList.add('open');
-    root.onclick = e => { if (e.target === root || e.target.closest('[data-close]')) closeModal(); };
+    root.onclick = e => {
+        if (e.target === root || e.target.closest('[data-close]')) { closeModal(); if (onClose) onClose(); }
+    };
     return root.querySelector('.modal');
 }
 
@@ -176,13 +180,30 @@ function barChart(values, labels) {
     </svg>`;
 }
 
+const SESSION_COLORS = { Presencial: 'accent', Online: 'blue', Avaliação: 'orange' };
+const STATUS_BADGE = { confirmada: ['green', 'Confirmada'], pendente: ['orange', 'Aguardando'], cancelada: ['red', 'Cancelada'] };
+
+// Sessões visíveis para quem está logado (o aluno só vê as próprias)
+function visibleSessions({ includeCancelled = false } = {}) {
+    return state.sessions
+        .filter(s => (user.role === 'personal' || s.student === CLIENT) && (includeCancelled || s.status !== 'cancelada'))
+        .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+}
+
+function upcomingSessions(limit) {
+    const now = localISO(new Date()) + new Date().toTimeString().slice(0, 5);
+    return visibleSessions().filter(s => s.date + s.time >= now).slice(0, limit);
+}
+
 function sessionItem(s) {
-    const color = { Presencial: 'accent', Online: 'blue', Avaliação: 'orange' }[s.type] || '';
-    return `<div class="list-item">
+    const [statusColor, statusLabel] = STATUS_BADGE[s.status] || ['', ''];
+    const who = user.role === 'personal' ? ` • ${esc(s.student)}` : '';
+    return `<a class="list-item clickable ${s.status === 'cancelada' ? 'cancelled' : ''}" href="#/${user.role}/agenda/${s.date}/${s.id}">
         <div class="date-box"><b>${fmtDate(s.date, { day: '2-digit' })}</b><span>${fmtDate(s.date, { month: 'short' })}</span></div>
-        <div class="grow"><div class="title">${esc(s.title)}</div><div class="meta">${s.time} • ${esc(s.place)}</div></div>
-        <span class="badge ${color}">${s.type}</span>
-    </div>`;
+        <div class="grow"><div class="title">${esc(s.title)}</div><div class="meta">${s.time} • ${esc(s.place)}${who}</div></div>
+        <div class="session-badges"><span class="badge ${SESSION_COLORS[s.type] || ''}">${s.type}</span>
+            ${s.status !== 'confirmada' ? `<span class="badge ${statusColor}">${statusLabel}</span>` : ''}</div>
+    </a>`;
 }
 
 // ---------- Páginas do aluno ----------
@@ -199,7 +220,7 @@ const clientPages = {
             const toGoal = last.weight - SEED.goal.weight;
             const goalPct = (first.weight - last.weight) / (first.weight - SEED.goal.weight);
             const doneIdx = w ? (state.doneExercises[doneKey(w.id)] || []) : [];
-            const next = SEED.sessions.filter(s => s.date >= today).slice(0, 3);
+            const next = upcomingSessions(3);
             const dayNames = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 
             return `
@@ -452,11 +473,6 @@ const clientPages = {
         }
     },
 
-    agenda: {
-        title: () => 'Agenda',
-        sub: () => 'Suas aulas e avaliações',
-        render: renderAgenda
-    },
 
     mensagens: {
         title: () => 'Mensagens',
@@ -509,33 +525,6 @@ const clientPages = {
 };
 
 // ---------- Páginas compartilhadas ----------
-function renderAgenda() {
-    const upcoming = SEED.sessions.filter(s => s.date >= today);
-    const now = new Date();
-    const first = new Date(now.getFullYear(), now.getMonth(), 1);
-    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    const lead = (first.getDay() + 6) % 7;
-    const sessionDates = new Set(SEED.sessions.map(s => s.date));
-    const cells = [];
-    for (let i = 0; i < lead; i++) cells.push('<div></div>');
-    for (let d = 1; d <= daysInMonth; d++) {
-        const iso = localISO(new Date(now.getFullYear(), now.getMonth(), d));
-        cells.push(`<div class="day ${sessionDates.has(iso) ? 'done' : ''} ${iso === today ? 'today' : ''}"><b>${d}</b>${sessionDates.has(iso) ? '<div class="dot"></div>' : ''}</div>`);
-    }
-    return `
-    <div class="grid grid-main">
-        <div class="card">
-            <div class="card-head"><h2>Próximas sessões</h2></div>
-            <div class="list">${upcoming.map(sessionItem).join('') || '<div class="empty">Nenhuma sessão agendada.</div>'}</div>
-        </div>
-        <div class="card">
-            <div class="card-head"><h2 style="text-transform:capitalize">${now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</h2></div>
-            <div class="week" style="margin-bottom:6px">${['S', 'T', 'Q', 'Q', 'S', 'S', 'D'].map(d => `<div class="muted small" style="text-align:center">${d}</div>`).join('')}</div>
-            <div class="week">${cells.join('')}</div>
-        </div>
-    </div>`;
-}
-
 function renderChat() {
     const other = user.role === 'personal' ? 'Lucas Andrade' : SEED.trainer.name;
     return `
@@ -607,7 +596,7 @@ const trainerPages = {
                 return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
             });
             const growth = ((rev[rev.length - 1] / rev[rev.length - 2]) - 1) * 100;
-            const todaySessions = SEED.sessions.filter(s => s.date >= today).slice(0, 4);
+            const todaySessions = upcomingSessions(4);
             return `
             <div class="grid grid-4">
                 <div class="card stat"><div class="label">Alunos ativos <span class="stat-ico">👥</span></div>
@@ -624,7 +613,7 @@ const trainerPages = {
             <div class="grid grid-main" style="margin-top:18px">
                 <div class="card"><div class="card-head"><h2>Faturamento (6 meses)</h2></div>${barChart(rev, months)}</div>
                 <div class="card"><div class="card-head"><h2>Próximas sessões</h2><a href="#/personal/agenda">Agenda →</a></div>
-                    <div class="list">${todaySessions.map(s => sessionItem({ ...s, title: s.title + ' — Lucas' })).join('')}</div></div>
+                    <div class="list">${todaySessions.map(sessionItem).join('') || '<div class="empty">Nenhuma sessão agendada.</div>'}</div></div>
             </div>
             <div class="card" style="margin-top:18px">
                 <div class="card-head"><h2>Alunos</h2><a href="#/personal/alunos">Ver todos →</a></div>
@@ -675,7 +664,6 @@ const trainerPages = {
         }
     },
 
-    agenda: { title: () => 'Agenda', sub: () => 'Sessões com seus alunos', render: renderAgenda },
     mensagens: { title: () => 'Mensagens', sub: () => 'Conversa com Lucas Andrade', render: renderChat, bind: bindChat }
 };
 
@@ -695,9 +683,19 @@ const NAV = {
     ]
 };
 
+function navBadge(role, id) {
+    if (id === 'mensagens') return '<span class="badge accent">2</span>';
+    if (id === 'agenda') {
+        // Coach: solicitações aguardando confirmação
+        const n = role === 'personal' ? state.sessions.filter(s => s.status === 'pendente').length : 0;
+        return n ? `<span class="badge orange">${n}</span>` : '';
+    }
+    return '';
+}
+
 function route() {
     // Formato: #/cliente/dashboard ou #/cliente/treinos/A
-    let [, role, page, param] = location.hash.split('/');
+    let [, role, page, param, extra] = location.hash.split('/');
     if (role !== 'cliente' && role !== 'personal') role = user.role || 'cliente';
     const pages = role === 'personal' ? trainerPages : clientPages;
     if (!pages[page]) page = 'dashboard';
@@ -705,7 +703,7 @@ function route() {
 
     $('#side-nav').innerHTML = `<div class="side-label">${role === 'personal' ? 'Coach' : 'Aluno'}</div>` +
         NAV[role].map(([id, ico, label]) => `<a class="side-link ${id === page ? 'active' : ''}" href="#/${role}/${id}">
-            <span class="ico">${ico}</span>${label}${id === 'mensagens' ? '<span class="badge accent">2</span>' : ''}</a>`).join('') +
+            <span class="ico">${ico}</span>${label}${navBadge(role, id)}</a>`).join('') +
         `<div class="side-label">Alternar</div>
          <a class="side-link" href="#/${role === 'personal' ? 'cliente' : 'personal'}/dashboard"><span class="ico">🔁</span>Ver como ${role === 'personal' ? 'aluno' : 'coach'}</a>`;
 
@@ -724,9 +722,9 @@ function route() {
         ? '<a class="btn btn-primary" href="#/cliente/treinos">▶ Treinar agora</a>' : '';
 
     const view = $('#view');
-    view.innerHTML = p.render(param);
-    if (p.bind) p.bind(view, param);
     closeModal();
+    view.innerHTML = p.render(param, extra);
+    if (p.bind) p.bind(view, param, extra);
     $('#sidebar').classList.remove('open');
     document.title = `Sidnei Muller Coach — ${NAV[role].find(n => n[0] === page)[2]}`;
 }

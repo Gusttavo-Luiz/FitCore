@@ -417,3 +417,45 @@ tr:last-child td { border-bottom: 0; }
     .logo-text em { display: none; }
     .logo-text { font-size: 18px; }
 }
+
+/* ---------- Agenda ---------- */
+.list-item.clickable { border-radius: 10px; margin: 0 -8px; padding-left: 8px; padding-right: 8px; transition: background .15s; }
+.list-item.clickable:hover { background: var(--surface-2); }
+.list-item.cancelled .title { text-decoration: line-through; color: var(--muted); }
+.session-badges { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
+.cal-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+.cal-head h2 { flex: 1; text-align: center; font-size: 17px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-labels { margin-bottom: 6px; text-align: center; font-size: 12px; color: var(--muted); }
+.cal-day {
+    position: relative; aspect-ratio: 1 / 1; min-height: 44px; border-radius: 10px; border: 1px solid transparent;
+    background: var(--surface-2); color: var(--text); cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px; font-size: 14px; transition: border-color .15s, background .15s;
+}
+.cal-day:hover { border-color: var(--border-hover); }
+.cal-day.past { color: var(--muted); background: transparent; }
+.cal-day.today { border-color: var(--accent-2); }
+.cal-day.selected { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.cal-dots { display: flex; gap: 3px; align-items: center; height: 6px; }
+.cal-dots small { font-size: 9px; line-height: 1; }
+.cal-dots i, .cal-legend i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.dot-accent { background: var(--accent); }
+.dot-blue { background: var(--blue); }
+.dot-orange { background: var(--orange); }
+.cal-day.selected .dot-accent { background: var(--accent-ink); }
+.cal-pending { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--orange); background: transparent; }
+.cal-pending.static { position: static; display: inline-block; }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; font-size: 12px; color: var(--muted); }
+.cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.slots { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.slot { border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 8px; padding: 5px 10px; font-size: 13px; cursor: pointer; }
+.slot:hover { border-color: var(--border-hover); }
+.slot.active { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.modal-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.modal-actions .btn { flex: 1 1 auto; }
+.btn.danger { color: var(--red); }
+.pending-card { border-color: rgba(240, 180, 76, .4); }
+@media (max-width: 520px) {
+    .cal-grid { gap: 4px; }
+    .cal-day { min-height: 38px; font-size: 13px; }
+}

@@ -79,11 +79,16 @@ const SEED = {
     ],
     goal: { weight: 78, label: 'Hipertrofia + perda de gordura' },
 
+    // Sessões da agenda. status: confirmada | pendente | cancelada
     sessions: [
-        { date: offsetDate(0), time: '18:00', title: 'Treino presencial', type: 'Presencial', place: 'Academia Smart Fit — Centro' },
-        { date: offsetDate(2), time: '07:30', title: 'Aula online — Funcional', type: 'Online', place: 'Google Meet' },
-        { date: offsetDate(5), time: '09:00', title: 'Avaliação física', type: 'Avaliação', place: 'Online — Google Meet' },
-        { date: offsetDate(9), time: '18:00', title: 'Treino presencial', type: 'Presencial', place: 'Academia Smart Fit — Centro' }
+        { id: 's1', student: 'Lucas Andrade', date: offsetDate(0), time: '18:00', duration: 60, title: 'Treino presencial', type: 'Presencial', place: 'Academia Smart Fit — Centro', status: 'confirmada', notes: '' },
+        { id: 's2', student: 'Lucas Andrade', date: offsetDate(2), time: '07:30', duration: 45, title: 'Aula online — Funcional', type: 'Online', place: 'Google Meet', status: 'confirmada', notes: '' },
+        { id: 's3', student: 'Lucas Andrade', date: offsetDate(5), time: '09:00', duration: 60, title: 'Avaliação física', type: 'Avaliação', place: 'Online — Google Meet', status: 'confirmada', notes: 'Tirar fotos de frente, lado e costas.' },
+        { id: 's4', student: 'Lucas Andrade', date: offsetDate(9), time: '18:00', duration: 60, title: 'Treino presencial', type: 'Presencial', place: 'Academia Smart Fit — Centro', status: 'confirmada', notes: '' },
+        { id: 's5', student: 'Mariana Souza', date: offsetDate(1), time: '19:00', duration: 60, title: 'Treino presencial', type: 'Presencial', place: 'Academia Smart Fit — Centro', status: 'confirmada', notes: '' },
+        { id: 's6', student: 'Rafael Lima', date: offsetDate(2), time: '12:00', duration: 45, title: 'Call de ajuste de treino', type: 'Online', place: 'Google Meet', status: 'confirmada', notes: '' },
+        { id: 's7', student: 'Beatriz Rocha', date: offsetDate(3), time: '08:00', duration: 60, title: 'Avaliação física inicial', type: 'Avaliação', place: 'Online — Google Meet', status: 'pendente', notes: 'Primeira avaliação.' },
+        { id: 's8', student: 'Pedro Martins', date: offsetDate(6), time: '17:00', duration: 60, title: 'Treino presencial', type: 'Presencial', place: 'Academia Smart Fit — Centro', status: 'confirmada', notes: '' }
     ],
 
     messages: [
