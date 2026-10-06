@@ -494,3 +494,26 @@ tr:last-child td { border-bottom: 0; }
 .thread-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
 .thread-side small { font-size: 11px; }
 .video-frame.vertical { aspect-ratio: 9 / 16; max-width: 340px; margin: 0 auto; }
+
+/* ---------- Financeiro ---------- */
+.fin-toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.fin-toolbar .input { width: auto; flex: 1 1 180px; }
+.fin-toolbar .btn { flex: 0 0 auto; }
+.fin-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.fin-batch { display: flex; flex-direction: column; gap: 10px; }
+.fin-batch .btn { justify-content: flex-start; text-align: left; }
+.fin-total td { font-weight: 700; border-top: 1px solid var(--border-hover); }
+.check-line { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); margin: 12px 0; cursor: pointer; }
+.fin-chart .bar-rec { fill: var(--accent); }
+.fin-chart .bar-exp { fill: url(#hatch); stroke: var(--accent-2); stroke-width: 1; }
+.fin-chart .hatch-bg { fill: var(--surface-2); }
+.fin-chart .hatch-line { stroke: var(--accent-2); stroke-width: 2; }
+.fin-chart .hit { fill: transparent; cursor: default; }
+.fin-chart .fin-group:hover .hit { fill: rgba(var(--accent-rgb), .05); }
+.chart-legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); }
+.chart-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.lg-rec { background: var(--accent); }
+.lg-exp { background: repeating-linear-gradient(45deg, var(--accent-2) 0 2px, var(--surface-2) 2px 5px); border: 1px solid var(--accent-2); }
+.fin-table { margin-top: 10px; }
+.fin-table summary { cursor: pointer; }

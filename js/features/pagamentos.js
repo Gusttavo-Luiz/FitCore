@@ -1,6 +1,5 @@
 // ---------- Pagamentos (aluno) e financeiro (personal) ----------
 // Demonstração: nenhum pagamento é processado de verdade.
-let finFilter = '';
 
 function invoiceStatus(inv) {
     if (inv.paidAt) return { key: 'pago', label: 'Pago', color: 'green' };
@@ -96,81 +95,5 @@ clientPages.pagamentos = {
     bind(view) {
         view.querySelectorAll('[data-pay]').forEach(b => b.onclick = () =>
             openPayment(state.invoices.find(i => i.id === b.dataset.pay)));
-    }
-};
-
-function financeTable() {
-    const list = [...state.invoices]
-        .filter(i => !finFilter || invoiceStatus(i).key === finFilter)
-        .sort((a, b) => b.due.localeCompare(a.due));
-    if (!list.length) return '<div class="empty">Nenhuma cobrança neste filtro.</div>';
-    return `<div class="table-wrap"><table>
-        <thead><tr><th>Aluno</th><th>Plano</th><th>Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead>
-        <tbody>${list.map(i => { const st = invoiceStatus(i); return `<tr>
-            <td><div class="cell-user"><div class="avatar" style="width:32px;height:32px;font-size:12px">${initials(i.student)}</div>${esc(i.student)}</div></td>
-            <td>${esc(i.plan)}</td><td>${money(i.amount)}</td><td>${fmtFull(i.due)}</td>
-            <td><span class="badge ${st.color}">${st.label}</span>${i.paidAt ? ` <span class="muted small">${i.method}</span>` : ''}</td>
-            <td>${i.paidAt ? `<button class="btn btn-ghost btn-sm" data-unpay="${i.id}">Desfazer</button>`
-                : `<button class="btn btn-sm" data-markpaid="${i.id}">Marcar pago</button>`}</td></tr>`; }).join('')}</tbody>
-    </table></div>`;
-}
-
-trainerPages.financeiro = {
-    title: () => 'Financeiro',
-    sub: () => 'Mensalidades e cobranças dos alunos',
-    render() {
-        const month = today.slice(0, 7);
-        const sum = arr => arr.reduce((t, i) => t + i.amount, 0);
-        const received = state.invoices.filter(i => i.paidAt && i.paidAt.slice(0, 7) === month);
-        const open = state.invoices.filter(i => invoiceStatus(i).key === 'aberto');
-        const late = state.invoices.filter(i => invoiceStatus(i).key === 'atrasado');
-        const filters = [['', 'Todas'], ['aberto', 'Em aberto'], ['atrasado', 'Atrasadas'], ['pago', 'Pagas']];
-        return `
-        <div class="grid grid-3">
-            <div class="card stat"><div class="label">Recebido no mês <span class="stat-ico">✅</span></div>
-                <div class="value">${money(sum(received))}</div><div class="muted small">${received.length} pagamento(s)</div></div>
-            <div class="card stat"><div class="label">A receber <span class="stat-ico">⏳</span></div>
-                <div class="value">${money(sum(open))}</div><div class="muted small">${open.length} cobrança(s)</div></div>
-            <div class="card stat"><div class="label">Em atraso <span class="stat-ico">⚠️</span></div>
-                <div class="value ${late.length ? 'down' : ''}">${money(sum(late))}</div>
-                <div class="muted small">${[...new Set(late.map(i => i.student))].map(esc).join(', ') || 'Ninguém em atraso'}</div></div>
-        </div>
-        <div class="card" style="margin-top:18px">
-            <div class="card-head"><h2>Cobranças</h2></div>
-            <div class="tabs">${filters.map(([k, l]) => `<button class="tab ${finFilter === k ? 'active' : ''}" data-fin="${k}">${l}</button>`).join('')}</div>
-            ${financeTable()}
-        </div>
-        <div class="card" style="margin-top:18px">
-            <div class="card-head"><h2>Nova cobrança</h2></div>
-            <form id="inv-form" class="form-row">
-                <label class="field">Aluno<select class="input" name="student">${SEED.students.map(s => `<option>${esc(s.name)}</option>`).join('')}</select></label>
-                <label class="field">Valor (R$)<input class="input" type="number" min="1" step="0.01" name="amount" required></label>
-                <label class="field">Vencimento<input class="input" type="date" name="due" value="${today}" required></label>
-                <button class="btn btn-primary" type="submit">Gerar cobrança</button>
-            </form>
-        </div>`;
-    },
-    bind(view) {
-        view.querySelectorAll('[data-fin]').forEach(b => b.onclick = () => { finFilter = b.dataset.fin; route(); });
-        const find = idv => state.invoices.find(i => i.id === idv);
-        view.querySelectorAll('[data-markpaid]').forEach(b => b.onclick = () => {
-            Object.assign(find(b.dataset.markpaid), { paidAt: today, method: 'Manual' });
-            save(); toast('Pagamento registrado!'); route();
-        });
-        view.querySelectorAll('[data-unpay]').forEach(b => b.onclick = () => {
-            Object.assign(find(b.dataset.unpay), { paidAt: null, method: null });
-            save(); route();
-        });
-        const form = view.querySelector('#inv-form');
-        const student = () => SEED.students.find(s => s.name === form.student.value);
-        const fillAmount = () => { form.amount.value = SEED.planPrices[student()?.plan] || ''; };
-        form.student.onchange = fillAmount;
-        fillAmount();
-        form.onsubmit = e => {
-            e.preventDefault();
-            state.invoices.push({ id: newId('inv'), student: form.student.value, plan: student()?.plan || 'Avulso',
-                amount: +form.amount.value, due: form.due.value, paidAt: null, method: null });
-            save(); toast('Cobrança gerada!'); route();
-        };
     }
 };

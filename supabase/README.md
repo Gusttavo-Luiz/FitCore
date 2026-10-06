@@ -16,7 +16,7 @@ O site funciona em dois modos:
 2. **Criar as tabelas e as regras de segurança**
    - No projeto, abra **SQL Editor → New query**.
    - Cole o conteúdo inteiro de [`migrations/0001_schema.sql`](migrations/0001_schema.sql) e clique em **Run**.
-   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) , [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real) e [`migrations/0004_default_videos.sql`](migrations/0004_default_videos.sql) (vídeos que já vêm cadastrados, como o do Burpee).
+   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) , [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real) , [`migrations/0004_default_videos.sql`](migrations/0004_default_videos.sql) (vídeos que já vêm cadastrados, como o do Burpee) e [`migrations/0005_expenses.sql`](migrations/0005_expenses.sql) (despesas do Financeiro).
    - Pode rodar de novo sem problema: os arquivos não apagam nada.
 
 3. **Configurar o login**
@@ -65,6 +65,7 @@ O site funciona em dois modos:
 | `invoices` | Cobranças | Aluno dono; coach | Coach |
 | `exercise_videos` | Link do vídeo de cada exercício | Todos os logados | Coach |
 | `student_invites` | Alunos cadastrados pelo coach (nome, e-mail, plano, objetivo) | Coach | Coach |
+| `expenses` | Despesas do coach (descrição, categoria, valor, data) | Coach | Coach |
 | `messages` | Chat: conversa de cada aluno com o coach, com confirmação de leitura | Aluno dono; coach | Quem participa da conversa, só em nome próprio. Ninguém edita nem apaga; só marca como lida |
 | Storage `assessment-photos` | Fotos das avaliações, em `<id do aluno>/...` | Aluno dono; coach | Aluno dono; coach |
 
@@ -81,6 +82,7 @@ psql -d teste -f supabase/migrations/0001_schema.sql
 psql -d teste -f supabase/migrations/0002_student_invites.sql
 psql -d teste -f supabase/migrations/0003_messages.sql
 psql -d teste -f supabase/migrations/0004_default_videos.sql
+psql -d teste -f supabase/migrations/0005_expenses.sql
 psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PASSARAM"
 ```
 

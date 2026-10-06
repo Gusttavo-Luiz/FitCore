@@ -37,6 +37,7 @@ const state = {
     videos: { ...SEED.defaultVideos, ...store.get('videos', {}) },
     assessments: store.get('assessments', SEED.assessments),
     invoices: store.get('invoices', SEED.invoices),
+    expenses: store.get('expenses', SEED.expenses),
     sessions: store.get('sessions', SEED.sessions)
 };
 
@@ -61,6 +62,7 @@ function save() {
     store.set('plans', state.plans);
     store.set('videos', state.videos);
     store.set('invoices', state.invoices);
+    store.set('expenses', state.expenses);
     store.set('sessions', state.sessions);
     // Avaliações têm fotos e podem estourar o limite do navegador
     if (!store.set('assessments', state.assessments)) {
@@ -611,7 +613,7 @@ const trainerPages = {
             const st = SEED.students;
             const active = st.filter(s => s.status !== 'Pendente');
             const avg = active.length ? Math.round(active.reduce((t, s) => t + s.adherence, 0) / active.length) : 0;
-            const rev = Backend.enabled ? revenueLast6Months() : SEED.revenue;
+            const rev = revenueLast6Months();
             const months = Array.from({ length: rev.length }, (_, i) => {
                 const d = new Date(); d.setMonth(d.getMonth() - (rev.length - 1 - i));
                 return d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');

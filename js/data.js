@@ -179,8 +179,9 @@ SEED.invoices = (() => {
     const dueDays = { 'Lucas Andrade': 10, 'Mariana Souza': 15, 'Rafael Lima': 12, 'Juliana Costa': 8, 'Pedro Martins': 20, 'Beatriz Rocha': 6 };
     const plans = { 'Lucas Andrade': 'Performance', 'Mariana Souza': 'Premium', 'Rafael Lima': 'Premium', 'Juliana Costa': 'Essencial', 'Pedro Martins': 'Performance', 'Beatriz Rocha': 'Essencial' };
     Object.keys(plans).forEach(student => {
-        for (let m = -3; m <= 0; m++) {
+        for (let m = -5; m <= 0; m++) {
             if (student === 'Beatriz Rocha' && m < 0) continue; // aluna nova
+            if (student === 'Pedro Martins' && m < -2) continue; // entrou há 3 meses
             const due = localISO(new Date(now.getFullYear(), now.getMonth() + m, dueDays[student]));
             // Meses anteriores pagos; no mês atual, só alguns já pagaram
             const paid = m < 0 ? !(student === 'Juliana Costa' && m === -1) : ['Mariana Souza', 'Pedro Martins'].includes(student);
@@ -191,5 +192,19 @@ SEED.invoices = (() => {
             });
         }
     });
+    return list;
+})();
+
+// ---------- Despesas do coach (exemplo) ----------
+SEED.expenses = (() => {
+    const now = new Date();
+    const list = [];
+    const day = (m, d) => localISO(new Date(now.getFullYear(), now.getMonth() + m, d));
+    for (let m = -5; m <= 0; m++) {
+        list.push({ id: 'ex-das' + m, description: 'Guia DAS do MEI', category: 'Impostos e taxas', amount: 75.9, date: day(m, 5) });
+        list.push({ id: 'ex-sw' + m, description: 'App de treinos e agenda', category: 'Software e apps', amount: 59.9, date: day(m, 8) });
+        list.push({ id: 'ex-mk' + m, description: 'Anúncios no Instagram', category: 'Marketing', amount: [120, 150, 90, 200, 180, 160][m + 5], date: day(m, 15) });
+    }
+    list.push({ id: 'ex-eq1', description: 'Elásticos e kettlebell', category: 'Equipamentos', amount: 380, date: day(-2, 20) });
     return list;
 })();

@@ -145,4 +145,13 @@ select t_assert((select read_at is not null from messages where id = 'm2'), 'alu
 select t_denied($$delete from messages where id = 'm1'$$, 'ninguém apaga mensagens');
 reset role;
 select t_assert(exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'messages'), 'mensagens ligadas ao tempo real');
+-- ===== Despesas (0005) =====
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'coach', false);
+insert into expenses (id, description, category, amount, date) values ('e1', 'Aluguel', 'Aluguel e espaço', 450, current_date);
+select t_assert((select count(*) from expenses) = 1, 'coach lança despesa');
+select set_config('request.jwt.claim.sub', :'ana', false);
+select t_assert((select count(*) from expenses) = 0, 'aluna não vê despesas do coach');
+select t_denied($$insert into expenses (description, amount, date) values ('x', 1, current_date)$$, 'aluna não lança despesa');
+reset role;
 \echo TODOS OS TESTES PASSARAM

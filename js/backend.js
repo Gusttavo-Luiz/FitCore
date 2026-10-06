@@ -184,7 +184,7 @@ const Backend = (() => {
         const students = api.people.filter(p => p.role === 'aluno');
 
         const since = offsetDate(-60);
-        const [plans, logs, days, progress, assessments, sessions, invoices, videos] = await Promise.all([
+        const [plans, logs, days, progress, assessments, sessions, invoices, videos, expenses] = await Promise.all([
             sb.from('workout_plans').select('*').order('position'),
             sb.from('workout_logs').select('*').gte('date', since),
             sb.from('workout_days').select('*').gte('date', since),
@@ -192,7 +192,9 @@ const Backend = (() => {
             sb.from('assessments').select('*').order('date'),
             sb.from('sessions').select('*'),
             sb.from('invoices').select('*'),
-            sb.from('exercise_videos').select('*')
+            sb.from('exercise_videos').select('*'),
+            // Despesas: só o coach enxerga (para o aluno volta vazio)
+            sb.from('expenses').select('*')
         ].map(p => p.then(check)));
 
         // Quem está logado vira o "aluno" da área do aluno
@@ -217,6 +219,7 @@ const Backend = (() => {
         state.invoices = invoices.map(r => ({
             id: r.id, student: nameOf(r.student_id), plan: r.plan, amount: num(r.amount), due: r.due, paidAt: r.paid_at, method: r.method
         }));
+        state.expenses = expenses.map(r => ({ id: r.id, description: r.description, category: r.category, amount: num(r.amount), date: r.date }));
         state.videos = { ...SEED.defaultVideos, ...Object.fromEntries(videos.map(r => [r.exercise_id, r.url])) };
         state.profile = { height: num(me.height_cm) || '', age: me.age || '', phone: me.phone || '', targetWeight: num(me.target_weight) };
         // Chat: últimas mensagens de todas as conversas que a pessoa pode ver
@@ -322,6 +325,10 @@ const Backend = (() => {
             rows: () => state.invoices.map(i => ({
                 id: i.id, student_id: idOf(i.student), plan: i.plan, amount: i.amount, due: i.due, paid_at: i.paidAt || null, method: i.method || null
             }))
+        },
+        expenses: {
+            pk: ['id'], canWrite: isCoach,
+            rows: () => (state.expenses || []).map(e => ({ id: e.id, description: e.description, category: e.category, amount: e.amount, date: e.date }))
         },
         exercise_videos: {
             pk: ['exercise_id'], canWrite: isCoach,
