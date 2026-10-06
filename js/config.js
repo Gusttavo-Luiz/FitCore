@@ -7,6 +7,9 @@ const SITE = {
     // Link completo do checkout da Prime Coaching (app.primecoaching.com.br/checkout/...).
     // Enquanto estiver vazio, os botões de compra levam ao Instagram.
     checkout: '',
+    // WhatsApp com DDI + DDD, só números (ex.: '5511999999999'). Vazio = botões escondidos.
+    whatsapp: '5511921410448', // número de exemplo: trocar pelo do Sidnei
+    whatsappMessage: 'Olá, Sidnei! Vim pelo site e quero saber mais sobre a consultoria.',
     coupon: 'CHAMP',
     couponDiscount: '15%'
 };
@@ -15,7 +18,13 @@ const SITE = {
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('[data-link]').forEach(a => {
         const key = a.dataset.link;
-        a.href = key === 'checkout' ? (SITE.checkout || SITE.instagram) : SITE[key];
+        if (key === 'whatsapp') {
+            const num = SITE.whatsapp.replace(/\D/g, '');
+            if (!num) { a.hidden = true; return; }
+            a.href = `https://wa.me/${num}?text=${encodeURIComponent(SITE.whatsappMessage)}`;
+        } else {
+            a.href = key === 'checkout' ? (SITE.checkout || SITE.instagram) : SITE[key];
+        }
         a.target = '_blank';
         a.rel = 'noopener';
     });

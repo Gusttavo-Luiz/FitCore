@@ -460,3 +460,24 @@ tr:last-child td { border-bottom: 0; }
     .cal-grid { gap: 4px; }
     .cal-day { min-height: 38px; font-size: 13px; }
 }
+
+/* ---------- Botões com as cores originais do Instagram e do WhatsApp ---------- */
+.brand-ig, .brand-wa { color: #fff !important; border: 0 !important; }
+/* Ícone quadrado: degradê radial do logo; botões largos: degradê linear (texto legível) */
+.brand-ig { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important; }
+.icon-btn.brand-ig { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285aeb 90%) !important; }
+.brand-wa { background: #25d366 !important; }
+.brand-ig:hover, .brand-wa:hover { filter: brightness(1.08); }
+.brand-ig svg, .brand-wa svg { fill: #fff; }
+.btn.brand-ig, .btn.brand-wa { font-weight: 700; }
+[hidden] { display: none !important; }
+.about .hero-actions { flex-wrap: wrap; }
+.offer-box .btn + .btn { margin-top: 8px; }
+.side-social { display: flex; gap: 8px; margin: 0 4px 10px; }
+.side-social .btn { flex: 1; padding: 8px; }
+.wa-float {
+    position: fixed; right: 20px; bottom: 20px; z-index: 30; width: 56px; height: 56px; border-radius: 50%;
+    display: grid; place-items: center; box-shadow: 0 8px 24px rgba(37, 211, 102, .35); transition: transform .15s;
+}
+.wa-float:hover { transform: scale(1.06); }
+.wa-float svg { width: 30px; height: 30px; }
