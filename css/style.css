@@ -66,14 +66,21 @@ img { max-width: 100%; display: block; }
     background: rgba(6, 6, 6, .85); backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--border);
 }
-.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; letter-spacing: -.5px; }
+.logo { display: flex; align-items: center; gap: 10px; }
 .logo-mark {
-    width: 34px; height: 34px; border-radius: 9px; color: #fff;
+    width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0;
+    display: grid; place-items: center;
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    box-shadow: 0 4px 16px rgba(var(--accent-rgb), .35);
-    display: grid; place-items: center; font-size: 18px; font-weight: 900;
+    box-shadow: 0 4px 16px rgba(var(--accent-rgb), .35), inset 0 1px 0 rgba(255, 255, 255, .25);
+    transform: skewX(-6deg);
 }
-.logo span b { color: var(--accent); }
+.logo-mark svg { width: 20px; height: 20px; fill: #fff; transform: skewX(6deg); }
+.logo-text { font-weight: 900; font-size: 21px; letter-spacing: -.8px; text-transform: uppercase; font-style: italic; display: flex; align-items: center; }
+.logo-text b { color: var(--accent); font-weight: 900; }
+.logo-text em {
+    font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: 1px; margin-left: 6px;
+    padding: 2px 6px; border-radius: 6px; border: 1px solid rgba(var(--accent-rgb), .45); color: var(--accent);
+}
 .nav-links { display: flex; gap: 28px; color: var(--muted); font-size: 14px; }
 .nav-links a:hover { color: var(--text); }
 
