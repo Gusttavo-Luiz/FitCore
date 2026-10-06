@@ -296,7 +296,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
-| 22 | — | Vídeo de execução do Burpee (YouTube Shorts) já vem no site; Shorts aparecem num quadro vertical |
+| 22 | `e04996a` | Vídeo de execução do Burpee (YouTube Shorts) já vem no site; Shorts aparecem num quadro vertical |
 | 21 | `0c2c7d0` | Mensagens do coach viram um chat geral também na demonstração: lista com todos os alunos e conversa particular com cada um |
 | 20 | `2b08373` | Chat no banco: mensagens em tempo real entre aluno e coach, lista de conversas do coach, não lidas e confirmação de leitura |
 | 19 | `fd16c51` | Botão Editar na lista de Alunos: coach muda plano, objetivo e status (e o plano/objetivo de convites pendentes) |
