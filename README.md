@@ -6,10 +6,10 @@ Repositório FitCore. Os dados do coach (Instagram, link do checkout, cupom) fic
 
 Site estático (HTML/CSS/JS puro, sem dependências) para consultoria de personal trainer.
 
-- `index.html` — página inicial com recursos, planos, depoimentos e login (Aluno ou Personal).
+- `index.html` — página inicial: método, sobre o coach, consultoria com cupom, botões de WhatsApp e Instagram, e login (Aluno ou Coach).
 - `app.html` — área logada com rotas por hash:
   - **Aluno** (`#/cliente/...`): dashboard, treinos (marcar exercícios, cronômetro de descanso), biblioteca de exercícios com vídeos, dieta, evolução, avaliação física com fotos, agenda, pagamentos, mensagens e perfil.
-  - **Personal** (`#/personal/...`): dashboard, alunos, fichas de treino por aluno (criar, editar, duplicar, copiar), biblioteca (cadastrar link de vídeo por exercício), avaliações, financeiro (cobranças, marcar pago), agenda e mensagens.
+  - **Coach** (`#/personal/...`): dashboard, alunos, fichas de treino por aluno (criar, editar, duplicar, copiar), biblioteca (cadastrar link de vídeo por exercício), avaliações, financeiro (cobranças, marcar pago), agenda e mensagens.
 
 Novas telas ficam em `js/features/`. Os pagamentos são apenas uma demonstração: nenhum valor é cobrado. Para cobrar de verdade é preciso integrar um provedor (Mercado Pago, Stripe, PagSeguro).
 
