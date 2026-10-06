@@ -123,7 +123,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Avaliação física | `avaliacao` | 7 medidas + fotos de frente, lado e costas; comparação antes e depois |
 | Agenda | `agenda/<data>/<sessão>` | Calendário, solicitar horário, remarcar, cancelar, adicionar ao Google Agenda |
 | Pagamentos | `pagamentos` | Plano, cobranças em aberto, pagamento simulado (Pix), histórico |
-| Mensagens | `mensagens` | Chat com o coach (respostas automáticas de demonstração) |
+| Mensagens | `mensagens` | Chat com o coach (no Supabase, em tempo real; na demonstração, respostas automáticas) |
 | Perfil | `perfil` | Altura, idade, telefone, assinatura, link do Instagram |
 
 **Telas do coach** (`#/personal/...`)
@@ -137,7 +137,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Avaliações | `avaliacoes` | Avaliações de qualquer aluno |
 | Financeiro | `financeiro` | Recebido no mês, a receber, em atraso; marcar pago; gerar cobrança |
 | Agenda | `agenda/<data>/<sessão>` | Confirmar ou recusar solicitações, agendar, editar, filtrar por aluno |
-| Mensagens | `mensagens` | Chat com o aluno |
+| Mensagens | `mensagens/<aluno>` | Lista de conversas (uma por aluno, com busca e não lidas) e chat em tempo real |
 
 Na demonstração, a área do aluno mostra sempre os dados de "Lucas Andrade" e a do coach, sempre os do Sidnei.
 
@@ -295,7 +295,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
-| 20 | — | Chat no banco: mensagens em tempo real entre aluno e coach, lista de conversas do coach, não lidas e confirmação de leitura |
+| 20 | `2b08373` | Chat no banco: mensagens em tempo real entre aluno e coach, lista de conversas do coach, não lidas e confirmação de leitura |
 | 19 | `fd16c51` | Botão Editar na lista de Alunos: coach muda plano, objetivo e status (e o plano/objetivo de convites pendentes) |
 | 18 | `e6fea5b` | Coach cadastra alunos pelo site: convite por e-mail, tela "Crie sua senha", perfil já com plano e objetivo |
 | 17 | `57095e1` | Backend com Supabase: esquema do banco com regras de acesso (RLS) e Storage, login e cadastro reais, sincronização dos dados, guia de configuração e testes |
