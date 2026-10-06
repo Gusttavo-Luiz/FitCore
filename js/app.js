@@ -6,10 +6,16 @@ const store = {
             return v ? JSON.parse(v) : fallback;
         } catch (_) { return fallback; }
     },
+    // Retorna false se o navegador recusar (ex.: armazenamento cheio)
     set(key, value) {
-        try { localStorage.setItem('fitcore_' + key, JSON.stringify(value)); } catch (_) {}
+        try { localStorage.setItem('fitcore_' + key, JSON.stringify(value)); return true; } catch (_) { return false; }
     }
 };
+
+// Aluno usado na demonstração (a área do aluno sempre mostra os dados dele)
+const CLIENT = 'Lucas Andrade';
+const DEFAULT_NOTES = 'Controle a fase excêntrica (3 segundos na descida). Se completar todas as repetições com boa execução, aumente 2 kg na próxima sessão.';
+const WEEKDAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
 const user = store.get('user', { name: 'Lucas Andrade', email: 'lucas@email.com', role: 'cliente' });
 const today = localISO(new Date());
@@ -22,7 +28,13 @@ const state = {
     progress: store.get('progress', SEED.progress),
     messages: store.get('messages', SEED.messages),
     water: store.get('water_' + today, 0),
-    profile: store.get('profile', { height: 178, age: 29, phone: '(11) 98765-4321' })
+    profile: store.get('profile', { height: 178, age: 29, phone: '(11) 98765-4321' }),
+    // Fichas de treino por aluno: { 'Lucas Andrade': [ficha, ...] }
+    plans: store.get('plans', { [CLIENT]: SEED.workouts.map(w => ({ ...w, notes: DEFAULT_NOTES })) }),
+    // Link de vídeo por exercício da biblioteca: { 'supino-reto-com-barra': 'https://youtu.be/...' }
+    videos: store.get('videos', {}),
+    assessments: store.get('assessments', SEED.assessments),
+    invoices: store.get('invoices', SEED.invoices)
 };
 
 function seedWorkoutDays() {
@@ -41,6 +53,15 @@ function save() {
     store.set('messages', state.messages);
     store.set('water_' + today, state.water);
     store.set('profile', state.profile);
+    store.set('plans', state.plans);
+    store.set('videos', state.videos);
+    store.set('invoices', state.invoices);
+    // Avaliações têm fotos e podem estourar o limite do navegador
+    if (!store.set('assessments', state.assessments)) {
+        toast('Armazenamento do navegador cheio: remova fotos antigas.');
+        return false;
+    }
+    return true;
 }
 
 // ---------- Utilidades ----------
@@ -59,10 +80,36 @@ function toast(text) {
     toast.timer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-function todayWorkout() {
-    const dow = (new Date().getDay() + 6) % 7; // segunda = 0
-    return SEED.workouts[dow] || null; // sábado/domingo: descanso
+function planOf(student) {
+    return state.plans[student] || (state.plans[student] = []);
 }
+
+function myPlan() { return planOf(CLIENT); }
+
+function todayWorkout() {
+    const dayName = WEEKDAYS[(new Date().getDay() + 6) % 7]; // segunda = 0
+    return myPlan().find(w => w.day === dayName) || null;
+}
+
+function libByName(name) {
+    return SEED.library.find(e => e.name.toLowerCase() === String(name).toLowerCase());
+}
+
+function modal(html) {
+    const root = $('#modal');
+    root.innerHTML = `<div class="modal">${html}</div>`;
+    root.classList.add('open');
+    root.onclick = e => { if (e.target === root || e.target.closest('[data-close]')) closeModal(); };
+    return root.querySelector('.modal');
+}
+
+function closeModal() {
+    const root = $('#modal');
+    root.classList.remove('open');
+    root.innerHTML = '';
+}
+
+const money = v => Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 function weekDays() {
     const now = new Date();
@@ -179,7 +226,7 @@ const clientPages = {
                     <div class="card-head"><h2>Treino de hoje</h2><a href="#/cliente/treinos">Ver todos →</a></div>
                     ${w ? `
                         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-                            <div><b style="font-size:20px">${w.name} • ${w.focus}</b>
+                            <div><b style="font-size:20px">${esc(w.name)} • ${esc(w.focus)}</b>
                                 <div class="muted small">${w.exercises.length} exercícios • ~${w.duration} min</div></div>
                             <a class="btn btn-primary" href="#/cliente/treinos/${w.id}">${doneIdx.length ? 'Continuar' : 'Iniciar treino'} →</a>
                         </div>
@@ -232,23 +279,26 @@ const clientPages = {
         title: () => 'Meus treinos',
         sub: () => `Ficha montada por ${SEED.trainer.name}`,
         render(param) {
-            const w = SEED.workouts.find(x => x.id === param) || todayWorkout() || SEED.workouts[0];
+            const plan = myPlan();
+            const w = plan.find(x => x.id === param) || todayWorkout() || plan[0];
+            if (!w) return '<div class="card empty">Seu personal ainda não montou suas fichas de treino.</div>';
             const done = state.doneExercises[doneKey(w.id)] || [];
             const finished = state.workoutDays.includes(today);
             return `
             <div class="tabs">
-                ${SEED.workouts.map(x => `<a class="tab ${x.id === w.id ? 'active' : ''}" href="#/cliente/treinos/${x.id}">${x.name}</a>`).join('')}
+                ${plan.map(x => `<a class="tab ${x.id === w.id ? 'active' : ''}" href="#/cliente/treinos/${x.id}">${x.name}</a>`).join('')}
             </div>
             <div class="grid grid-main">
                 <div class="card">
                     <div class="card-head">
-                        <div><h2>${w.name} — ${w.focus}</h2><div class="muted small">${w.day} • ~${w.duration} min</div></div>
+                        <div><h2>${esc(w.name)} — ${esc(w.focus)}</h2><div class="muted small">${w.day} • ~${w.duration} min</div></div>
                         <span class="badge ${done.length === w.exercises.length ? 'accent' : ''}">${done.length}/${w.exercises.length}</span>
                     </div>
                     ${w.exercises.map((e, i) => `
                         <div class="exercise ${done.includes(i) ? 'done' : ''}">
                             <button class="check" data-ex="${i}" aria-label="Marcar ${esc(e.name)}">${done.includes(i) ? '✓' : ''}</button>
-                            <div><div class="ex-name">${esc(e.name)}</div>
+                            <div><div class="ex-name">${esc(e.name)}${libByName(e.name)
+                                ? ` <a class="small" style="color:var(--accent)" href="#/cliente/biblioteca/${libByName(e.name).id}">▶ ver execução</a>` : ''}</div>
                                 <div class="ex-meta"><span class="badge">${e.sets} séries</span><span class="badge">${e.reps} reps</span>
                                 <span class="badge blue">${e.load}</span><span class="badge">⏱ ${e.rest}</span></div></div>
                             <span class="muted small">#${i + 1}</span>
@@ -266,12 +316,14 @@ const clientPages = {
                         </div>
                     </div>
                     <div class="card-head" style="margin-top:24px"><h3>Observações do personal</h3></div>
-                    <p class="muted small">Controle a fase excêntrica (3 segundos na descida). Se completar todas as repetições com boa execução, aumente 2 kg na próxima sessão.</p>
+                    <p class="muted small">${esc(w.notes || 'Sem observações para esta ficha.')}</p>
                 </div>
             </div>`;
         },
         bind(view, param) {
-            const w = SEED.workouts.find(x => x.id === param) || todayWorkout() || SEED.workouts[0];
+            const plan = myPlan();
+            const w = plan.find(x => x.id === param) || todayWorkout() || plan[0];
+            if (!w) return;
             const key = doneKey(w.id);
             view.querySelectorAll('[data-ex]').forEach(b => b.onclick = () => {
                 const i = Number(b.dataset.ex);
@@ -437,7 +489,7 @@ const clientPages = {
                     <div class="list">
                         <div class="list-item"><div class="grow muted">Plano</div><b>Performance</b></div>
                         <div class="list-item"><div class="grow muted">Valor</div><b>R$ 149/mês</b></div>
-                        <div class="list-item"><div class="grow muted">Próxima cobrança</div><b>10/10</b></div>
+                        <div class="list-item"><div class="grow muted">Cobranças</div><a href="#/cliente/pagamentos" style="color:var(--accent)">Ver pagamentos →</a></div>
                         <div class="list-item"><div class="grow muted">Personal</div><b>${SEED.trainer.name}</b></div>
                         <div class="list-item"><div class="grow muted">Registro</div><b>${SEED.trainer.cref}</b></div>
                     </div>
@@ -631,11 +683,14 @@ SEED.students = store.get('students', SEED.students);
 // ---------- Navegação ----------
 const NAV = {
     cliente: [
-        ['dashboard', '🏠', 'Dashboard'], ['treinos', '🏋️', 'Treinos'], ['dieta', '🥗', 'Dieta'],
-        ['evolucao', '📈', 'Evolução'], ['agenda', '📅', 'Agenda'], ['mensagens', '💬', 'Mensagens'], ['perfil', '👤', 'Perfil']
+        ['dashboard', '🏠', 'Dashboard'], ['treinos', '🏋️', 'Treinos'], ['biblioteca', '🎬', 'Exercícios'], ['dieta', '🥗', 'Dieta'],
+        ['evolucao', '📈', 'Evolução'], ['avaliacao', '📸', 'Avaliação física'], ['agenda', '📅', 'Agenda'],
+        ['pagamentos', '💳', 'Pagamentos'], ['mensagens', '💬', 'Mensagens'], ['perfil', '👤', 'Perfil']
     ],
     personal: [
-        ['dashboard', '🏠', 'Dashboard'], ['alunos', '👥', 'Alunos'], ['agenda', '📅', 'Agenda'], ['mensagens', '💬', 'Mensagens']
+        ['dashboard', '🏠', 'Dashboard'], ['alunos', '👥', 'Alunos'], ['fichas', '📋', 'Fichas de treino'],
+        ['biblioteca', '🎬', 'Exercícios'], ['avaliacoes', '📸', 'Avaliações'], ['financeiro', '💰', 'Financeiro'],
+        ['agenda', '📅', 'Agenda'], ['mensagens', '💬', 'Mensagens']
     ]
 };
 
@@ -669,6 +724,7 @@ function route() {
     const view = $('#view');
     view.innerHTML = p.render(param);
     if (p.bind) p.bind(view, param);
+    closeModal();
     $('#sidebar').classList.remove('open');
     document.title = `FitCore Pro — ${NAV[role].find(n => n[0] === page)[2]}`;
 }
@@ -679,4 +735,5 @@ $('#logout').onclick = () => {
     location.href = 'index.html';
 };
 window.addEventListener('hashchange', () => { window.scrollTo(0, 0); route(); });
-route();
+// As telas de js/features/ registram suas páginas antes da primeira renderização
+window.addEventListener('DOMContentLoaded', route);

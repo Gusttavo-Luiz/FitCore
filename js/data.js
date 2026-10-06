@@ -115,3 +115,77 @@ function offsetDate(days) {
 function localISO(d) {
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
+
+// ---------- Biblioteca de exercícios ----------
+// [nome, grupo, equipamento, nível, músculos, dicas]
+SEED.library = [
+    ['Supino reto com barra', 'Peito', 'Barra', 'Intermediário', 'Peitoral maior, tríceps, deltoide anterior', ['Escápulas retraídas e pés firmes no chão', 'Desça a barra até a linha do peito', 'Não tire o quadril do banco']],
+    ['Supino inclinado com halteres', 'Peito', 'Halteres', 'Intermediário', 'Peitoral superior, deltoide anterior', ['Banco entre 30° e 45°', 'Cotovelos a ~45° do tronco', 'Junte os halteres no alto sem bater']],
+    ['Crucifixo na polia', 'Peito', 'Polia', 'Iniciante', 'Peitoral maior', ['Cotovelos levemente flexionados o tempo todo', 'Movimento em arco, como um abraço', 'Contraia o peito no final']],
+    ['Flexão de braço', 'Peito', 'Peso corporal', 'Iniciante', 'Peitoral, tríceps, core', ['Corpo alinhado da cabeça aos pés', 'Mãos um pouco além da largura dos ombros', 'Peito quase encosta no chão']],
+    ['Mergulho nas paralelas', 'Peito', 'Paralelas', 'Avançado', 'Peitoral inferior, tríceps', ['Incline o tronco à frente para focar no peito', 'Desça até ~90° de cotovelo', 'Evite elevar os ombros']],
+    ['Tríceps corda', 'Tríceps', 'Polia', 'Iniciante', 'Tríceps braquial', ['Cotovelos colados ao corpo', 'Abra a corda no final do movimento', 'Controle a volta']],
+    ['Tríceps francês', 'Tríceps', 'Halteres', 'Intermediário', 'Tríceps (cabeça longa)', ['Cotovelos apontando para cima', 'Desça o peso atrás da cabeça', 'Não abra os cotovelos']],
+    ['Tríceps testa', 'Tríceps', 'Barra W', 'Intermediário', 'Tríceps braquial', ['Braços perpendiculares ao chão', 'Desça a barra em direção à testa', 'Só o antebraço se move']],
+    ['Puxada frontal', 'Costas', 'Polia', 'Iniciante', 'Latíssimo do dorso, bíceps', ['Puxe a barra até a parte alta do peito', 'Peito aberto, leve inclinação para trás', 'Não use impulso']],
+    ['Remada curvada', 'Costas', 'Barra', 'Intermediário', 'Latíssimo, romboides, trapézio', ['Tronco a ~45°, coluna neutra', 'Puxe a barra em direção ao umbigo', 'Aperte as escápulas no topo']],
+    ['Remada unilateral', 'Costas', 'Halteres', 'Iniciante', 'Latíssimo, romboides', ['Apoie joelho e mão no banco', 'Puxe o cotovelo para trás e para cima', 'Evite girar o tronco']],
+    ['Pulldown na polia', 'Costas', 'Polia', 'Iniciante', 'Latíssimo do dorso', ['Braços quase estendidos', 'Leve a barra até as coxas', 'Foque em puxar com as costas']],
+    ['Barra fixa', 'Costas', 'Barra fixa', 'Avançado', 'Latíssimo, bíceps, core', ['Comece com os braços estendidos', 'Suba até o queixo passar a barra', 'Sem balançar o corpo']],
+    ['Rosca direta', 'Bíceps', 'Barra', 'Iniciante', 'Bíceps braquial', ['Cotovelos fixos ao lado do corpo', 'Não balance o tronco', 'Desça devagar']],
+    ['Rosca martelo', 'Bíceps', 'Halteres', 'Iniciante', 'Braquial, braquiorradial', ['Pegada neutra (palmas para dentro)', 'Suba alternando ou simultâneo', 'Punhos firmes']],
+    ['Rosca concentrada', 'Bíceps', 'Halteres', 'Iniciante', 'Bíceps braquial', ['Cotovelo apoiado na parte interna da coxa', 'Suba contraindo bem o bíceps', 'Movimento lento e controlado']],
+    ['Agachamento livre', 'Pernas', 'Barra', 'Avançado', 'Quadríceps, glúteos, posteriores', ['Pés na largura dos ombros', 'Joelhos acompanham a ponta dos pés', 'Coluna neutra durante todo o movimento']],
+    ['Leg press 45°', 'Pernas', 'Máquina', 'Iniciante', 'Quadríceps, glúteos', ['Lombar sempre apoiada no encosto', 'Não trave os joelhos no alto', 'Desça até ~90°']],
+    ['Cadeira extensora', 'Pernas', 'Máquina', 'Iniciante', 'Quadríceps', ['Ajuste o eixo na linha do joelho', 'Segure 1 segundo no topo', 'Desça controlando']],
+    ['Mesa flexora', 'Pernas', 'Máquina', 'Iniciante', 'Posteriores da coxa', ['Quadril colado no banco', 'Flexione até ~90°', 'Evite tirar o quadril']],
+    ['Stiff', 'Pernas', 'Barra', 'Intermediário', 'Posteriores, glúteos, lombar', ['Joelhos levemente flexionados', 'Leve o quadril para trás', 'Barra próxima às pernas']],
+    ['Afundo com halteres', 'Pernas', 'Halteres', 'Intermediário', 'Quadríceps, glúteos', ['Passo largo à frente', 'Joelho de trás quase toca o chão', 'Tronco ereto']],
+    ['Elevação pélvica', 'Pernas', 'Barra', 'Intermediário', 'Glúteos', ['Costas apoiadas no banco', 'Suba até alinhar tronco e coxas', 'Contraia os glúteos no topo']],
+    ['Panturrilha em pé', 'Pernas', 'Máquina', 'Iniciante', 'Gastrocnêmio, sóleo', ['Amplitude completa', 'Pausa no alto', 'Não deixe os joelhos dobrarem']],
+    ['Desenvolvimento com halteres', 'Ombros', 'Halteres', 'Intermediário', 'Deltoides, tríceps', ['Sentado com as costas apoiadas', 'Desça até a altura das orelhas', 'Não arqueie a lombar']],
+    ['Elevação lateral', 'Ombros', 'Halteres', 'Iniciante', 'Deltoide lateral', ['Suba até a linha dos ombros', 'Cotovelos levemente flexionados', 'Sem impulso do tronco']],
+    ['Elevação frontal', 'Ombros', 'Halteres', 'Iniciante', 'Deltoide anterior', ['Suba até a altura dos olhos', 'Braços quase estendidos', 'Alterne os braços se preferir']],
+    ['Crucifixo invertido', 'Ombros', 'Halteres', 'Iniciante', 'Deltoide posterior, romboides', ['Tronco inclinado à frente', 'Abra os braços até a linha dos ombros', 'Aperte as escápulas']],
+    ['Prancha', 'Abdômen', 'Peso corporal', 'Iniciante', 'Core, transverso do abdômen', ['Cotovelos abaixo dos ombros', 'Quadril alinhado, sem cair', 'Respire normalmente']],
+    ['Abdominal infra', 'Abdômen', 'Peso corporal', 'Iniciante', 'Reto abdominal (porção inferior)', ['Lombar colada no chão', 'Eleve as pernas sem impulso', 'Desça devagar']],
+    ['Abdominal crunch', 'Abdômen', 'Peso corporal', 'Iniciante', 'Reto abdominal', ['Mãos ao lado da cabeça, sem puxar o pescoço', 'Suba só até tirar as escápulas do chão', 'Expire ao subir']],
+    ['Esteira (intervalado)', 'Cardio', 'Esteira', 'Iniciante', 'Sistema cardiovascular', ['Alterne 1 min forte e 1 min leve', 'Aqueça 3 a 5 min antes', 'Mantenha a postura ereta']],
+    ['Burpee', 'Cardio', 'Peso corporal', 'Intermediário', 'Corpo inteiro', ['Agache, apoie as mãos e jogue os pés para trás', 'Faça uma flexão (opcional)', 'Volte e salte com os braços para cima']],
+    ['Kettlebell swing', 'Cardio', 'Kettlebell', 'Intermediário', 'Glúteos, posteriores, core', ['O movimento vem do quadril, não dos braços', 'Kettlebell até a altura do peito', 'Coluna neutra']],
+    ['Corda naval', 'Cardio', 'Corda naval', 'Iniciante', 'Ombros, braços, core', ['Joelhos semiflexionados', 'Ondas rápidas e alternadas', 'Mantenha o abdômen firme']]
+].map(([name, group, equipment, level, muscles, tips]) => ({
+    id: name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+    name, group, equipment, level, muscles, tips
+}));
+
+// ---------- Avaliações físicas (por aluno) ----------
+SEED.assessments = {
+    'Lucas Andrade': [
+        { id: 'av1', date: '2026-07-06', weight: 88.4, fat: 24.1, chest: 104, waist: 96, hip: 102, arm: 35, thigh: 60, notes: 'Avaliação inicial.', photos: {} },
+        { id: 'av2', date: '2026-08-31', weight: 84.7, fat: 21.4, chest: 103, waist: 91.5, hip: 100, arm: 35.5, thigh: 59.5, notes: 'Boa evolução na cintura.', photos: {} }
+    ]
+};
+
+// ---------- Cobranças ----------
+SEED.planPrices = { Essencial: 89, Performance: 149, Premium: 299 };
+SEED.invoices = (() => {
+    const list = [];
+    const now = new Date();
+    const dueDays = { 'Lucas Andrade': 10, 'Mariana Souza': 15, 'Rafael Lima': 12, 'Juliana Costa': 8, 'Pedro Martins': 20, 'Beatriz Rocha': 6 };
+    const plans = { 'Lucas Andrade': 'Performance', 'Mariana Souza': 'Premium', 'Rafael Lima': 'Premium', 'Juliana Costa': 'Essencial', 'Pedro Martins': 'Performance', 'Beatriz Rocha': 'Essencial' };
+    Object.keys(plans).forEach(student => {
+        for (let m = -3; m <= 0; m++) {
+            if (student === 'Beatriz Rocha' && m < 0) continue; // aluna nova
+            const due = localISO(new Date(now.getFullYear(), now.getMonth() + m, dueDays[student]));
+            // Meses anteriores pagos; no mês atual, só alguns já pagaram
+            const paid = m < 0 ? !(student === 'Juliana Costa' && m === -1) : ['Mariana Souza', 'Pedro Martins'].includes(student);
+            list.push({
+                id: `${student.split(' ')[0].toLowerCase()}-${due}`, student, plan: plans[student],
+                amount: SEED.planPrices[plans[student]], due,
+                paidAt: paid ? due : null, method: paid ? (m % 2 ? 'Pix' : 'Cartão') : null
+            });
+        }
+    });
+    return list;
+})();
