@@ -154,4 +154,26 @@ select set_config('request.jwt.claim.sub', :'ana', false);
 select t_assert((select count(*) from expenses) = 0, 'aluna não vê despesas do coach');
 select t_denied($$insert into expenses (description, amount, date) values ('x', 1, current_date)$$, 'aluna não lança despesa');
 reset role;
+-- ===== Avaliação por fotos (0006) =====
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'ana', false);
+insert into assessments (id, student_id, date, notes, photos, status, feedback)
+    values ('av-envio', :'ana', current_date, 'Fotos de 8 semanas', '{"front":"22222222-2222-2222-2222-222222222222/av-envio-front.jpg"}', 'avaliada', 'eu mesma aprovei');
+select t_assert((select status || '|' || feedback || '|' || submitted_by from assessments where id = 'av-envio') = 'enviada||aluno',
+                'aluna envia só fotos (sem medidas) e o envio nasce aguardando o coach');
+update assessments set status = 'avaliada', feedback = 'ok', notes = 'Atualizei o recado' where id = 'av-envio';
+select t_assert((select status || '|' || notes from assessments where id = 'av-envio') = 'enviada|Atualizei o recado',
+                'aluna edita o recado mas não marca como avaliada');
+select set_config('request.jwt.claim.sub', :'coach', false);
+select t_assert((select count(*) from assessments where status = 'enviada') = 2, 'coach vê na fila tudo que a aluna enviou (as duas avaliações)');
+update assessments set status = 'avaliada', feedback = 'Cintura bem mais fina!', reviewed_at = now(), weight = 63.2 where id = 'av-envio';
+select set_config('request.jwt.claim.sub', :'ana', false);
+select t_assert((select status || '|' || feedback || '|' || weight from assessments where id = 'av-envio') = 'avaliada|Cintura bem mais fina!|63.2',
+                'aluna vê o comentário do coach');
+insert into assessments (id, student_id, date, notes, photos, status, feedback) values ('av-envio', :'ana', current_date, 'de novo', '{}', 'enviada', '')
+    on conflict (id) do update set notes = excluded.notes, status = excluded.status, feedback = excluded.feedback;
+select t_assert((select status || '|' || feedback from assessments where id = 'av-envio') = 'avaliada|Cintura bem mais fina!',
+                'reenvio (upsert) da aluna não apaga a avaliação do coach');
+select t_denied(format($$insert into assessments (student_id, date, photos) values (%L, current_date, '{}')$$, :'bruno'), 'aluna não envia fotos em nome de outro');
+reset role;
 \echo TODOS OS TESTES PASSARAM

@@ -239,6 +239,7 @@ const Backend = (() => {
             (state.assessments[nameOf(r.student_id)] ||= []).push({
                 id: r.id, date: r.date, weight: num(r.weight), fat: num(r.fat), chest: num(r.chest), waist: num(r.waist),
                 hip: num(r.hip), arm: num(r.arm), thigh: num(r.thigh), notes: r.notes,
+                status: r.status || 'avaliada', feedback: r.feedback || '', reviewedAt: r.reviewed_at || null, submittedBy: r.submitted_by || 'coach',
                 photoPaths: { ...photoPaths },
                 photos: Object.fromEntries(Object.entries(photoPaths).map(([k, path]) => [k, signed[path]]).filter(([, u]) => u))
             });
@@ -310,7 +311,9 @@ const Backend = (() => {
             pk: ['id'], canWrite: () => true,
             rows: () => Object.entries(state.assessments).flatMap(([name, list]) => list.map(a => ({
                 id: a.id, student_id: idOf(name), date: a.date, weight: a.weight, fat: a.fat, chest: a.chest, waist: a.waist,
-                hip: a.hip, arm: a.arm, thigh: a.thigh, notes: a.notes || '', photos: a.photoPaths || {}
+                hip: a.hip, arm: a.arm, thigh: a.thigh, notes: a.notes || '', photos: a.photoPaths || {},
+                // O banco ignora estes campos quando quem grava é o aluno (gatilho da migração 0006)
+                status: a.status || 'avaliada', feedback: a.feedback || '', reviewed_at: a.reviewedAt || null, submitted_by: a.submittedBy || 'coach'
             })))
         },
         sessions: {

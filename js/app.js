@@ -740,6 +740,11 @@ function navBadge(role, id) {
         const n = Chat.unread();
         return n ? `<span class="badge accent" id="chat-badge">${n}</span>` : '';
     }
+    if (id === 'avaliacoes') {
+        // Coach: fotos enviadas pelos alunos esperando avaliação
+        const n = pendingReviews().length;
+        return n ? `<span class="badge orange">${n}</span>` : '';
+    }
     if (id === 'agenda') {
         // Coach: solicitações aguardando confirmação
         const n = role === 'personal' ? state.sessions.filter(s => s.status === 'pendente').length : 0;

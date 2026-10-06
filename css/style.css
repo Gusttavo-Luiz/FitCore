@@ -376,6 +376,14 @@ tr:last-child td { border-bottom: 0; }
 .thumbs { display: flex; gap: 6px; }
 .thumb { width: 44px; height: 56px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); padding: 0; cursor: pointer; background: none; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.eval-item .title .badge { margin-left: 6px; vertical-align: 1px; }
+.eval-feedback { flex-basis: 100%; background: var(--surface-2); border-left: 3px solid var(--accent); border-radius: 10px; padding: 10px 12px; font-size: 13px; }
+.eval-feedback small { color: var(--muted); }
+.eval-feedback p { margin: 4px 0 0; white-space: pre-line; }
+.eval-feedback-card { border-left: 3px solid var(--accent); }
+.review-compare { max-width: 440px; margin: 0 auto; }
+.review-compare .compare-row .photo { aspect-ratio: 3 / 4; cursor: default; }
+#review-form details summary { cursor: pointer; font-size: 13px; color: var(--muted); }
 
 /* ---------- Pagamentos ---------- */
 .pay-amount { font-size: 36px; font-weight: 800; letter-spacing: -1px; }

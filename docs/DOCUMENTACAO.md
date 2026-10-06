@@ -31,7 +31,7 @@ O site usa só as três linguagens nativas do navegador, sem framework, sem etap
 | Supabase (PostgreSQL + Auth + Storage) | Backend: login, banco de dados com regras de acesso (RLS) e fotos das avaliações. Ver [supabase/README.md](../supabase/README.md) |
 | SQL | Esquema do banco e regras de acesso (`supabase/migrations/0001_schema.sql`) |
 | localStorage | No modo demonstração, onde os dados ficam salvos, no próprio navegador |
-| Canvas API | Reduz as fotos das avaliações para 480 px antes de salvar |
+| Canvas API | Reduz as fotos das avaliações antes de salvar: 480 px na demonstração, 1000 px com o Supabase |
 | Google Fonts | Fonte Inter |
 | GitHub Pages | Hospedagem gratuita, publicada a cada envio para a `main` |
 | Git e GitHub | Controle de versões |
@@ -53,7 +53,7 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `js/backend.js` | 309 | Ligação com o Supabase: login, carregamento e sincronização dos dados |
 | `js/features/biblioteca.js` | 116 | Biblioteca de exercícios com vídeos |
 | `js/features/fichas.js` | 146 | Fichas de treino por aluno (coach) |
-| `js/features/avaliacao.js` | 184 | Avaliação física com fotos |
+| `js/features/avaliacao.js` | 374 | Avaliação física: o aluno envia as fotos, o coach avalia e comenta |
 | `js/features/pagamentos.js` | — | Pagamentos do aluno |
 | `js/features/financeiro.js` | — | Financeiro do coach: indicadores, gráfico, cobranças e despesas |
 | `js/features/agenda.js` | 274 | Agenda interativa |
@@ -66,6 +66,7 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `supabase/migrations/0003_messages.sql` | — | Chat aluno ↔ coach com tempo real |
 | `supabase/migrations/0004_default_videos.sql` | — | Vídeos de execução que já vêm cadastrados (Burpee) |
 | `supabase/migrations/0005_expenses.sql` | — | Despesas do coach (Financeiro) |
+| `supabase/migrations/0006_assessment_review.sql` | — | Envio de fotos pelo aluno e avaliação pelo coach (status, comentário, medidas opcionais) |
 | `js/features/chat.js` | — | Telas do chat com o Supabase (lista de conversas, tempo real, não lidas) |
 | `supabase/tests/` | — | Testes automáticos das regras de acesso (PostgreSQL local) |
 | `supabase/README.md` | — | Passo a passo para ligar o Supabase |
@@ -123,7 +124,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Exercícios | `biblioteca/<exercício>` | 35 exercícios com busca, filtro por grupo, dicas e vídeo |
 | Dieta | `dieta` | 6 refeições marcáveis e resumo de calorias e macros |
 | Evolução | `evolucao` | Gráficos de peso e gordura, nova medição, histórico com IMC |
-| Avaliação física | `avaliacao` | 7 medidas + fotos de frente, lado e costas; comparação antes e depois |
+| Avaliação física | `avaliacao` | **Enviar fotos para o coach** (frente, lado e costas; peso e recado opcionais) ou registrar medidas. Cada envio fica "Aguardando o coach" até ser avaliado; o comentário do coach aparece no topo e no histórico. Comparação antes e depois |
 | Agenda | `agenda/<data>/<sessão>` | Calendário, solicitar horário, remarcar, cancelar, adicionar ao Google Agenda |
 | Pagamentos | `pagamentos` | Plano, cobranças em aberto, pagamento simulado (Pix), histórico |
 | Mensagens | `mensagens` | Conversa particular com o coach (no Supabase, em tempo real; na demonstração, respostas automáticas) |
@@ -137,7 +138,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Alunos | `alunos` | Lista com busca e filtro; cadastro de aluno; botão Editar para mudar plano, objetivo e status |
 | Fichas de treino | `fichas/<ficha>` | Criar, editar, reordenar, duplicar, excluir e copiar fichas de cada aluno |
 | Exercícios | `biblioteca/<exercício>` | Igual ao aluno, mais o campo para colar o link do vídeo (YouTube, Vimeo ou .mp4) |
-| Avaliações | `avaliacoes` | Avaliações de qualquer aluno |
+| Avaliações | `avaliacoes` | Fila **Fotos aguardando avaliação** com os envios de todos os alunos (contador no menu). Em **Avaliar**, o coach compara as fotos novas com as últimas avaliadas, preenche medidas se quiser e escreve o comentário, que também pode ir para o chat do aluno. Histórico e comparação de qualquer aluno |
 | Financeiro | `financeiro` | 6 indicadores (recebido, a receber, em atraso com inadimplência, despesas, lucro, receita recorrente), gráfico receitas x despesas, cobranças (receber com forma de pagamento, cobrar no WhatsApp, recibo, editar, excluir, busca, filtro por mês, exportar CSV), mensalidades em lote, cobrança avulsa com cupom e despesas por categoria |
 | Agenda | `agenda/<data>/<sessão>` | Confirmar ou recusar solicitações, agendar, editar, filtrar por aluno |
 | Mensagens | `mensagens/<aluno>` | Lista de conversas (uma por aluno, com busca e não lidas) e chat em tempo real |
@@ -191,8 +192,10 @@ Os scripts carregam da esquerda para a direita; `app.js` concentra o estado e é
 | --- | --- | --- |
 | `videoEmbed()` | biblioteca.js | Converte um link do YouTube, Vimeo ou .mp4 em vídeo embutido |
 | `libraryOptions()`, `newId()` | fichas.js | Lista de exercícios para adicionar à ficha; gera ids únicos |
-| `compressImage()` | avaliacao.js | Reduz a foto para no máximo 480 px em JPEG antes de salvar |
-| `renderAssessments()`, `openAssessmentForm()` | avaliacao.js | Comparação antes e depois; formulário de nova avaliação |
+| `compressImage()` | avaliacao.js | Reduz a foto em JPEG antes de salvar (480 px na demonstração, 1000 px com o Supabase) |
+| `renderAssessments()`, `openAssessmentForm()` | avaliacao.js | Comparação antes e depois e histórico; registro de medidas (todas opcionais) |
+| `openPhotoSubmit()` | avaliacao.js | Aluno envia fotos para o coach (status `enviada`) |
+| `renderReviewQueue()`, `pendingReviews()`, `openReview()` | avaliacao.js | Fila do coach, contador do menu e tela de avaliação (comentário, medidas, envio no chat) |
 | `invoiceStatus()` | pagamentos.js | Classifica a cobrança como Pago, Em aberto ou Atrasado |
 | `openPayment()`, `financeTable()` | pagamentos.js | Janela de pagamento do aluno; tabela de cobranças do coach |
 | `conflictWith()`, `freeSlots()` | agenda.js | Detectam choque de horário e listam horários livres entre 6h e 21h |
@@ -227,7 +230,9 @@ O backend usa o Supabase: banco PostgreSQL, login por e-mail e senha e armazenam
 | Dashboard do aluno | Meta de exemplo (78 kg) | Peso-meta definido pelo aluno no Perfil |
 | Mensagens | Lista de alunos com conversa particular; mensagens salvas no navegador e respostas automáticas | Chat real em tempo real: o coach tem uma lista de conversas (uma por aluno, com busca e não lidas); as duas pontas veem quando a mensagem foi lida |
 
-**Testes:** 57 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 38 verificações (mais 16 do chat, com duas abas conversando em tempo real): cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino e pagamento.
+**Testes:** 66 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 46 verificações (mais 16 do chat, com duas abas conversando em tempo real): cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino, pagamento e envio de fotos com avaliação do coach.
+
+**Avaliação por fotos no banco:** a migração `0006` deixa as medidas opcionais e cria `status` (`enviada` ou `avaliada`), `feedback`, `reviewed_at` e `submitted_by`. Um gatilho garante que tudo que o aluno grava nasce como `enviada` e que só o coach muda status e comentário.
 
 ## Dados e armazenamento
 
@@ -298,6 +303,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
+| 24 | `PENDING` | Avaliação por fotos: o aluno envia frente, lado e costas; o coach tem uma fila de envios, compara com as fotos anteriores, comenta (o comentário pode ir para o chat) e marca como avaliada |
 | 23 | `7ab6816` | Financeiro ampliado: indicadores, gráfico receitas x despesas, receber com forma de pagamento, cobrar no WhatsApp, recibo, editar/excluir, mensalidades em lote, cupom, exportar CSV e despesas |
 | 22 | `e04996a` | Vídeo de execução do Burpee (YouTube Shorts) já vem no site; Shorts aparecem num quadro vertical |
 | 21 | `0c2c7d0` | Mensagens do coach viram um chat geral também na demonstração: lista com todos os alunos e conversa particular com cada um |

@@ -16,7 +16,7 @@ O site funciona em dois modos:
 2. **Criar as tabelas e as regras de segurança**
    - No projeto, abra **SQL Editor → New query**.
    - Cole o conteúdo inteiro de [`migrations/0001_schema.sql`](migrations/0001_schema.sql) e clique em **Run**.
-   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) , [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real) , [`migrations/0004_default_videos.sql`](migrations/0004_default_videos.sql) (vídeos que já vêm cadastrados, como o do Burpee) e [`migrations/0005_expenses.sql`](migrations/0005_expenses.sql) (despesas do Financeiro).
+   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) , [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real) , [`migrations/0004_default_videos.sql`](migrations/0004_default_videos.sql) (vídeos que já vêm cadastrados, como o do Burpee) , [`migrations/0005_expenses.sql`](migrations/0005_expenses.sql) (despesas do Financeiro) e [`migrations/0006_assessment_review.sql`](migrations/0006_assessment_review.sql) (aluno envia fotos, coach avalia).
    - Pode rodar de novo sem problema: os arquivos não apagam nada.
 
 3. **Configurar o login**
@@ -60,7 +60,7 @@ O site funciona em dois modos:
 | `workout_logs` | Exercícios marcados por ficha e dia | Aluno dono; coach | Aluno dono; coach |
 | `workout_days` | Dias com treino finalizado | Aluno dono; coach | Aluno dono; coach |
 | `progress_entries` | Peso, gordura e cintura por data | Aluno dono; coach | Aluno dono; coach |
-| `assessments` | Avaliações físicas + caminhos das fotos | Aluno dono; coach | Aluno dono; coach |
+| `assessments` | Avaliações físicas + caminhos das fotos, status (`enviada`/`avaliada`) e comentário do coach | Aluno dono; coach | Aluno envia (sempre como `enviada`) e edita o recado; só o coach avalia e comenta |
 | `sessions` | Agenda | Aluno dono; coach | Aluno: só pede (pendente), remarca ou cancela. Coach: tudo |
 | `invoices` | Cobranças | Aluno dono; coach | Coach |
 | `exercise_videos` | Link do vídeo de cada exercício | Todos os logados | Coach |
@@ -73,7 +73,7 @@ A função `busy_slots(de, até)` devolve só data, hora e duração das sessõe
 
 ## Testes
 
-As regras de acesso têm 57 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
+As regras de acesso têm 66 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
 
 ```bash
 createdb teste
@@ -83,6 +83,7 @@ psql -d teste -f supabase/migrations/0002_student_invites.sql
 psql -d teste -f supabase/migrations/0003_messages.sql
 psql -d teste -f supabase/migrations/0004_default_videos.sql
 psql -d teste -f supabase/migrations/0005_expenses.sql
+psql -d teste -f supabase/migrations/0006_assessment_review.sql
 psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PASSARAM"
 ```
 

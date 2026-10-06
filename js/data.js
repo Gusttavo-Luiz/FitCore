@@ -168,8 +168,27 @@ SEED.assessments = {
     'Lucas Andrade': [
         { id: 'av1', date: '2026-07-06', weight: 88.4, fat: 24.1, chest: 104, waist: 96, hip: 102, arm: 35, thigh: 60, notes: 'Avaliação inicial.', photos: {} },
         { id: 'av2', date: '2026-08-31', weight: 84.7, fat: 21.4, chest: 103, waist: 91.5, hip: 100, arm: 35.5, thigh: 59.5, notes: 'Boa evolução na cintura.', photos: {} }
+    ],
+    // Exemplo: a aluna enviou fotos novas e elas aguardam a avaliação do coach
+    'Mariana Souza': [
+        { id: 'av-ma1', date: '2026-08-10', weight: 66.0, fat: 27.5, chest: 92, waist: 78, hip: 101, arm: 29, thigh: 58, notes: 'Avaliação inicial.',
+          photos: demoPhotos(1.12), status: 'avaliada', feedback: 'Ótimo ponto de partida! Foco na constância dos treinos e na dieta.', reviewedAt: '2026-08-10T19:00:00' },
+        { id: 'av-ma2', date: offsetDate(-2), weight: 63.2, fat: null, chest: null, waist: null, hip: null, arm: null, thigh: null,
+          notes: 'Coach, seguem minhas fotos de 8 semanas! Senti a cintura mais fina.', photos: demoPhotos(1), status: 'enviada', feedback: '', reviewedAt: null }
     ]
 };
+
+// Fotos ilustrativas (silhuetas) para a demonstração
+function demoPhotos(width) {
+    const svg = (pose, label) => 'data:image/svg+xml,' + encodeURIComponent(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#1d1d1d"/>` +
+        `<g fill="#5a5a5a" transform="translate(150 0) scale(${pose === 'side' ? width * 0.7 : width} 1) translate(-150 0)">` +
+        `<circle cx="150" cy="70" r="32"/><rect x="104" y="110" width="92" height="150" rx="38"/>` +
+        (pose === 'side' ? '' : '<rect x="70" y="118" width="26" height="120" rx="13"/><rect x="204" y="118" width="26" height="120" rx="13"/>') +
+        `<rect x="110" y="240" width="34" height="140" rx="17"/><rect x="156" y="240" width="34" height="140" rx="17"/></g>` +
+        `<text x="150" y="26" fill="#888" font-family="sans-serif" font-size="16" text-anchor="middle">${label} (ilustração)</text></svg>`);
+    return { front: svg('front', 'Frente'), side: svg('side', 'Lado'), back: svg('back', 'Costas') };
+}
 
 // ---------- Cobranças ----------
 SEED.planPrices = { Essencial: 89, Performance: 149, Premium: 299 };
