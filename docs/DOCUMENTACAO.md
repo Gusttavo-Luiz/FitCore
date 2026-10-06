@@ -54,7 +54,8 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `js/features/biblioteca.js` | 116 | Biblioteca de exercícios com vídeos |
 | `js/features/fichas.js` | 146 | Fichas de treino por aluno (coach) |
 | `js/features/avaliacao.js` | 184 | Avaliação física com fotos |
-| `js/features/pagamentos.js` | 174 | Pagamentos (aluno) e financeiro (coach) |
+| `js/features/pagamentos.js` | — | Pagamentos do aluno |
+| `js/features/financeiro.js` | — | Financeiro do coach: indicadores, gráfico, cobranças e despesas |
 | `js/features/agenda.js` | 274 | Agenda interativa |
 | `assets/logo.svg` | — | Ícone do site (monograma SM) |
 | `assets/sidnei.jpg` | — | Foto do coach na seção Sobre |
@@ -64,6 +65,7 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `supabase/migrations/0002_student_invites.sql` | — | Cadastro de alunos pelo coach (convites) |
 | `supabase/migrations/0003_messages.sql` | — | Chat aluno ↔ coach com tempo real |
 | `supabase/migrations/0004_default_videos.sql` | — | Vídeos de execução que já vêm cadastrados (Burpee) |
+| `supabase/migrations/0005_expenses.sql` | — | Despesas do coach (Financeiro) |
 | `js/features/chat.js` | — | Telas do chat com o Supabase (lista de conversas, tempo real, não lidas) |
 | `supabase/tests/` | — | Testes automáticos das regras de acesso (PostgreSQL local) |
 | `supabase/README.md` | — | Passo a passo para ligar o Supabase |
@@ -136,7 +138,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Fichas de treino | `fichas/<ficha>` | Criar, editar, reordenar, duplicar, excluir e copiar fichas de cada aluno |
 | Exercícios | `biblioteca/<exercício>` | Igual ao aluno, mais o campo para colar o link do vídeo (YouTube, Vimeo ou .mp4) |
 | Avaliações | `avaliacoes` | Avaliações de qualquer aluno |
-| Financeiro | `financeiro` | Recebido no mês, a receber, em atraso; marcar pago; gerar cobrança |
+| Financeiro | `financeiro` | 6 indicadores (recebido, a receber, em atraso com inadimplência, despesas, lucro, receita recorrente), gráfico receitas x despesas, cobranças (receber com forma de pagamento, cobrar no WhatsApp, recibo, editar, excluir, busca, filtro por mês, exportar CSV), mensalidades em lote, cobrança avulsa com cupom e despesas por categoria |
 | Agenda | `agenda/<data>/<sessão>` | Confirmar ou recusar solicitações, agendar, editar, filtrar por aluno |
 | Mensagens | `mensagens/<aluno>` | Lista de conversas (uma por aluno, com busca e não lidas) e chat em tempo real |
 
@@ -296,6 +298,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
+| 23 | `7ab6816` | Financeiro ampliado: indicadores, gráfico receitas x despesas, receber com forma de pagamento, cobrar no WhatsApp, recibo, editar/excluir, mensalidades em lote, cupom, exportar CSV e despesas |
 | 22 | `e04996a` | Vídeo de execução do Burpee (YouTube Shorts) já vem no site; Shorts aparecem num quadro vertical |
 | 21 | `0c2c7d0` | Mensagens do coach viram um chat geral também na demonstração: lista com todos os alunos e conversa particular com cada um |
 | 20 | `2b08373` | Chat no banco: mensagens em tempo real entre aluno e coach, lista de conversas do coach, não lidas e confirmação de leitura |
