@@ -149,7 +149,7 @@ function lineChart(points, { suffix = '', decimals = 1 } = {}) {
     const ticks = [0, 0.5, 1].map(t => min + t * (max - min));
     return `<svg class="chart" viewBox="0 0 ${W} ${H}">
         <defs><linearGradient id="chartGrad" x1="0" x2="0" y1="0" y2="1">
-            <stop offset="0" stop-color="#c6f432" stop-opacity=".28"/><stop offset="1" stop-color="#c6f432" stop-opacity="0"/>
+            <stop offset="0" style="stop-color:var(--accent);stop-opacity:.3"/><stop offset="1" style="stop-color:var(--accent);stop-opacity:0"/>
         </linearGradient></defs>
         ${ticks.map(t => `<line class="grid-line" x1="${P.l}" x2="${W - P.r}" y1="${y(t)}" y2="${y(t)}"/>
             <text x="4" y="${y(t) + 4}">${num(t, decimals)}${suffix}</text>`).join('')}
@@ -170,7 +170,7 @@ function barChart(values, labels) {
             const x = P.l + i * bw + bw * 0.2;
             const last = i === values.length - 1;
             return `<rect x="${x}" y="${H - P.b - h}" width="${bw * 0.6}" height="${h}" rx="6"
-                        fill="${last ? '#c6f432' : '#2a303a'}"><title>R$ ${v.toLocaleString('pt-BR')}</title></rect>
+                        style="fill:${last ? 'var(--accent)' : 'var(--border-hover)'}"><title>R$ ${v.toLocaleString('pt-BR')}</title></rect>
                     <text x="${x + bw * 0.3}" y="${H - 8}" text-anchor="middle">${labels[i]}</text>`;
         }).join('')}
     </svg>`;
@@ -206,7 +206,7 @@ const clientPages = {
             <div class="grid grid-4">
                 <div class="card stat"><div class="label">Peso atual <span class="stat-ico">⚖️</span></div>
                     <div class="value">${num(last.weight)} <small>kg</small></div>
-                    <div class="delta down">▼ ${num(first.weight - last.weight)} kg desde o início</div></div>
+                    <div class="delta up">▼ ${num(first.weight - last.weight)} kg desde o início</div></div>
                 <div class="card stat"><div class="label">Gordura corporal <span class="stat-ico">🔥</span></div>
                     <div class="value">${num(last.fat)} <small>%</small></div>
                     <div class="delta up">▼ ${num(first.fat - last.fat)} p.p.</div></div>
