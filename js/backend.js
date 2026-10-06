@@ -135,8 +135,6 @@ const Backend = (() => {
         check(await sb.from('messages').update({ read_at: now }).in('id', ids));
     };
 
-    api.unreadCount = studentId => state.chat.filter(m => !m.mine && !m.readAt && (!studentId || m.studentId === studentId)).length;
-
     // Tempo real: o Supabase avisa quando chega mensagem nova (só as que a pessoa pode ler)
     api.onMessage = null;
     api.listenToMessages = () => {
@@ -221,7 +219,6 @@ const Backend = (() => {
         }));
         state.videos = Object.fromEntries(videos.map(r => [r.exercise_id, r.url]));
         state.profile = { height: num(me.height_cm) || '', age: me.age || '', phone: me.phone || '', targetWeight: num(me.target_weight) };
-        state.messages = [];
         // Chat: últimas mensagens de todas as conversas que a pessoa pode ver
         state.chat = check(await sb.from('messages').select('*').order('created_at')).map(toChat);
         api.listenToMessages();

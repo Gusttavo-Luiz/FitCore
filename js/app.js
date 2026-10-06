@@ -27,7 +27,8 @@ const state = {
     // datas (YYYY-MM-DD) em que algum treino foi finalizado
     workoutDays: store.get('workoutDays', seedWorkoutDays()),
     progress: store.get('progress', SEED.progress),
-    messages: store.get('messages', SEED.messages),
+    // Chat: carregado em js/features/chat.js (demonstração) ou em backend.js (Supabase)
+    chat: [],
     water: store.get('water_' + today, 0),
     profile: store.get('profile', { height: 178, age: 29, phone: '(11) 98765-4321' }),
     // Fichas de treino por aluno: { 'Lucas Andrade': [ficha, ...] }
@@ -54,7 +55,7 @@ function save() {
     store.set('done', state.doneExercises);
     store.set('workoutDays', state.workoutDays);
     store.set('progress', state.progress);
-    store.set('messages', state.messages);
+    store.set('chat', state.chat);
     store.set('water_' + today, state.water);
     store.set('profile', state.profile);
     store.set('plans', state.plans);
@@ -484,12 +485,6 @@ const clientPages = {
     },
 
 
-    mensagens: {
-        title: () => 'Mensagens',
-        sub: () => `Conversa com ${SEED.trainer.name}`,
-        render: renderChat,
-        bind: bindChat
-    },
 
     perfil: {
         title: () => 'Meu perfil',
@@ -538,50 +533,6 @@ const clientPages = {
 
 function myPlanName() {
     return (Backend.enabled && Backend.profile && Backend.profile.plan) || 'Performance';
-}
-
-// ---------- Páginas compartilhadas ----------
-// Chat de demonstração (com o Supabase, o chat real fica em js/features/chat.js)
-function renderChat() {
-    const other = user.role === 'personal' ? 'Lucas Andrade' : SEED.trainer.name;
-    return `
-    <div class="card chat">
-        <div class="card-head"><div class="cell-user"><div class="avatar">${initials(other)}</div>
-            <div><b>${other}</b><div class="small" style="color:var(--green)">● online</div></div></div></div>
-        <div class="chat-body" id="chat-body">
-            ${state.messages.map(m => {
-                // No painel do personal, os papéis se invertem
-                const mine = user.role === 'personal' ? m.from === 'them' : m.from === 'me';
-                return `<div class="msg ${mine ? 'me' : 'them'}">${esc(m.text)}<small>${m.at}</small></div>`;
-            }).join('')}
-        </div>
-        <form class="chat-form" id="chat-form">
-            <input class="input" name="text" placeholder="Escreva uma mensagem..." autocomplete="off">
-            <button class="btn btn-primary" type="submit">Enviar</button>
-        </form>
-    </div>`;
-}
-
-function bindChat(view) {
-    const body = view.querySelector('#chat-body');
-    body.scrollTop = body.scrollHeight;
-    const f = view.querySelector('#chat-form');
-    f.text.focus();
-    f.onsubmit = e => {
-        e.preventDefault();
-        const text = f.text.value.trim();
-        if (!text) return;
-        const at = new Date().toTimeString().slice(0, 5);
-        state.messages.push({ from: user.role === 'personal' ? 'them' : 'me', text, at });
-        save(); route();
-        if (user.role !== 'personal') {
-            setTimeout(() => {
-                state.messages.push({ from: 'them', text: 'Recebido! Já te respondo com mais detalhes 👊', at: new Date().toTimeString().slice(0, 5) });
-                save();
-                if (location.hash.includes('mensagens')) route();
-            }, 1500);
-        }
-    };
 }
 
 // ---------- Páginas do personal ----------
@@ -763,9 +714,7 @@ const trainerPages = {
                 }
             };
         }
-    },
-
-    mensagens: { title: () => 'Mensagens', sub: () => 'Conversa com Lucas Andrade', render: renderChat, bind: bindChat }
+    }
 };
 
 SEED.students = store.get('students', SEED.students);
@@ -786,8 +735,7 @@ const NAV = {
 
 function navBadge(role, id) {
     if (id === 'mensagens') {
-        if (!Backend.enabled) return '<span class="badge accent">2</span>';
-        const n = Backend.unreadCount();
+        const n = Chat.unread();
         return n ? `<span class="badge accent" id="chat-badge">${n}</span>` : '';
     }
     if (id === 'agenda') {

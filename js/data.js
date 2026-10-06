@@ -91,12 +91,6 @@ const SEED = {
         { id: 's8', student: 'Pedro Martins', date: offsetDate(6), time: '17:00', duration: 60, title: 'Treino presencial', type: 'Presencial', place: 'Academia Smart Fit — Centro', status: 'confirmada', notes: '' }
     ],
 
-    messages: [
-        { from: 'them', text: 'Bom dia! Como foi o treino de pernas ontem?', at: '08:12' },
-        { from: 'me', text: 'Foi pesado, mas consegui subir a carga no agachamento para 80 kg 💪', at: '08:30' },
-        { from: 'them', text: 'Excelente! Mantém essa carga essa semana e foca na execução. Na próxima avaliação a gente ajusta.', at: '08:34' },
-        { from: 'them', text: 'Lembre de beber pelo menos 3 L de água por dia.', at: '08:35' }
-    ],
 
     // Usado no painel do personal
     students: [

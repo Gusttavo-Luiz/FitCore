@@ -491,3 +491,5 @@ tr:last-child td { border-bottom: 0; }
     .chat-layout { grid-template-columns: 1fr; }
     .thread-list { max-height: 260px; }
 }
+.thread-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.thread-side small { font-size: 11px; }
