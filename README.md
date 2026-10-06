@@ -2,6 +2,8 @@
 
 Repositório FitCore. Os dados do coach (Instagram, link do checkout, cupom) ficam em `js/config.js`.
 
+📄 **Documentação completa:** [docs/DOCUMENTACAO.md](docs/DOCUMENTACAO.md) — tecnologias, estrutura de arquivos, funções, dados, publicação e histórico de mudanças.
+
 Site estático (HTML/CSS/JS puro, sem dependências) para consultoria de personal trainer.
 
 - `index.html` — página inicial com recursos, planos, depoimentos e login (Aluno ou Personal).
