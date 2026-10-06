@@ -123,7 +123,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Avaliação física | `avaliacao` | 7 medidas + fotos de frente, lado e costas; comparação antes e depois |
 | Agenda | `agenda/<data>/<sessão>` | Calendário, solicitar horário, remarcar, cancelar, adicionar ao Google Agenda |
 | Pagamentos | `pagamentos` | Plano, cobranças em aberto, pagamento simulado (Pix), histórico |
-| Mensagens | `mensagens` | Chat com o coach (no Supabase, em tempo real; na demonstração, respostas automáticas) |
+| Mensagens | `mensagens` | Conversa particular com o coach (no Supabase, em tempo real; na demonstração, respostas automáticas) |
 | Perfil | `perfil` | Altura, idade, telefone, assinatura, link do Instagram |
 
 **Telas do coach** (`#/personal/...`)
@@ -222,7 +222,7 @@ O backend usa o Supabase: banco PostgreSQL, login por e-mail e senha e armazenam
 | Alunos (coach) | Formulário de cadastro (só no navegador) | Coach cadastra nome, e-mail, plano e objetivo; o aluno recebe um link por e-mail e cria a senha |
 | Dashboard do coach | Faturamento de exemplo | Soma das cobranças pagas por mês |
 | Dashboard do aluno | Meta de exemplo (78 kg) | Peso-meta definido pelo aluno no Perfil |
-| Mensagens | Chat de demonstração (respostas automáticas) | Chat real em tempo real: o coach tem uma lista de conversas (uma por aluno, com busca e não lidas); as duas pontas veem quando a mensagem foi lida |
+| Mensagens | Lista de alunos com conversa particular; mensagens salvas no navegador e respostas automáticas | Chat real em tempo real: o coach tem uma lista de conversas (uma por aluno, com busca e não lidas); as duas pontas veem quando a mensagem foi lida |
 
 **Testes:** 57 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 38 verificações (mais 16 do chat, com duas abas conversando em tempo real): cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino e pagamento.
 
@@ -295,6 +295,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
+| 21 | `0c2c7d0` | Mensagens do coach viram um chat geral também na demonstração: lista com todos os alunos e conversa particular com cada um |
 | 20 | `2b08373` | Chat no banco: mensagens em tempo real entre aluno e coach, lista de conversas do coach, não lidas e confirmação de leitura |
 | 19 | `fd16c51` | Botão Editar na lista de Alunos: coach muda plano, objetivo e status (e o plano/objetivo de convites pendentes) |
 | 18 | `e6fea5b` | Coach cadastra alunos pelo site: convite por e-mail, tela "Crie sua senha", perfil já com plano e objetivo |
