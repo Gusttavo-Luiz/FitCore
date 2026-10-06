@@ -541,15 +541,8 @@ function myPlanName() {
 }
 
 // ---------- Páginas compartilhadas ----------
+// Chat de demonstração (com o Supabase, o chat real fica em js/features/chat.js)
 function renderChat() {
-    // O chat ainda não passa pelo banco: com o Supabase ligado, a conversa é pelo WhatsApp
-    if (Backend.enabled) {
-        return `<div class="card empty" style="padding:40px">
-            <p style="margin-bottom:16px">O chat dentro do app chega em breve.<br>Por enquanto, fale direto pelo WhatsApp.</p>
-            ${SITE.whatsapp ? `<a class="btn brand-wa" target="_blank" rel="noopener"
-                href="https://wa.me/${SITE.whatsapp.replace(/\D/g, '')}">Abrir WhatsApp</a>` : ''}
-        </div>`;
-    }
     const other = user.role === 'personal' ? 'Lucas Andrade' : SEED.trainer.name;
     return `
     <div class="card chat">
@@ -570,7 +563,6 @@ function renderChat() {
 }
 
 function bindChat(view) {
-    if (Backend.enabled) return;
     const body = view.querySelector('#chat-body');
     body.scrollTop = body.scrollHeight;
     const f = view.querySelector('#chat-form');
@@ -793,7 +785,11 @@ const NAV = {
 };
 
 function navBadge(role, id) {
-    if (id === 'mensagens') return '<span class="badge accent">2</span>';
+    if (id === 'mensagens') {
+        if (!Backend.enabled) return '<span class="badge accent">2</span>';
+        const n = Backend.unreadCount();
+        return n ? `<span class="badge accent" id="chat-badge">${n}</span>` : '';
+    }
     if (id === 'agenda') {
         // Coach: solicitações aguardando confirmação
         const n = role === 'personal' ? state.sessions.filter(s => s.status === 'pendente').length : 0;

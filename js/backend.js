@@ -108,6 +108,54 @@ const Backend = (() => {
         await api.refreshStudents();
     };
 
+    // ---------- Chat ----------
+    const toChat = r => ({
+        id: r.id, studentId: r.student_id, student: nameOf(r.student_id), mine: r.sender_id === api.profile.id,
+        body: r.body, createdAt: r.created_at, readAt: r.read_at
+    });
+    const addChat = row => {
+        if (state.chat.some(m => m.id === row.id)) return null;
+        const msg = toChat(row);
+        state.chat.push(msg);
+        return msg;
+    };
+
+    api.sendMessage = async (studentId, body) => {
+        const row = check(await sb.from('messages')
+            .insert({ student_id: studentId, sender_id: api.profile.id, body }).select().single());
+        return addChat(row) || state.chat.find(m => m.id === row.id);
+    };
+
+    // Marca como lidas as mensagens recebidas numa conversa
+    api.markRead = async studentId => {
+        const ids = state.chat.filter(m => m.studentId === studentId && !m.mine && !m.readAt).map(m => m.id);
+        if (!ids.length) return;
+        const now = new Date().toISOString();
+        state.chat.forEach(m => { if (ids.includes(m.id)) m.readAt = now; });
+        check(await sb.from('messages').update({ read_at: now }).in('id', ids));
+    };
+
+    api.unreadCount = studentId => state.chat.filter(m => !m.mine && !m.readAt && (!studentId || m.studentId === studentId)).length;
+
+    // Tempo real: o Supabase avisa quando chega mensagem nova (só as que a pessoa pode ler)
+    api.onMessage = null;
+    api.listenToMessages = () => {
+        if (api.channel) return;
+        api.channel = sb.channel('chat')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+                const msg = addChat(payload.new);
+                if (msg && api.onMessage) api.onMessage(msg);
+            })
+            // Confirmação de leitura: a outra pessoa abriu a conversa
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, payload => {
+                const msg = state.chat.find(m => m.id === payload.new.id);
+                if (!msg || msg.readAt === payload.new.read_at) return;
+                msg.readAt = payload.new.read_at;
+                if (msg.mine && api.onRead) api.onRead(msg);
+            })
+            .subscribe();
+    };
+
     api.signOut = async () => {
         await connect();
         await sb.auth.signOut();
@@ -174,6 +222,9 @@ const Backend = (() => {
         state.videos = Object.fromEntries(videos.map(r => [r.exercise_id, r.url]));
         state.profile = { height: num(me.height_cm) || '', age: me.age || '', phone: me.phone || '', targetWeight: num(me.target_weight) };
         state.messages = [];
+        // Chat: últimas mensagens de todas as conversas que a pessoa pode ver
+        state.chat = check(await sb.from('messages').select('*').order('created_at')).map(toChat);
+        api.listenToMessages();
 
         // Fotos: o banco guarda o caminho no Storage; para exibir, gera links temporários
         state.assessments = {};

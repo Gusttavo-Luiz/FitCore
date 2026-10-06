@@ -19,3 +19,7 @@ $$ select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/')
 alter table storage.objects enable row level security;
 grant usage on schema storage to authenticated;
 grant select, insert, delete on storage.objects to authenticated;
+-- Publicação usada pelo Supabase Realtime
+do $$ begin
+    if not exists (select from pg_publication where pubname = 'supabase_realtime') then create publication supabase_realtime; end if;
+end $$;

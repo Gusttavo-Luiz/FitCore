@@ -16,7 +16,7 @@ O site funciona em dois modos:
 2. **Criar as tabelas e as regras de segurança**
    - No projeto, abra **SQL Editor → New query**.
    - Cole o conteúdo inteiro de [`migrations/0001_schema.sql`](migrations/0001_schema.sql) e clique em **Run**.
-   - Faça o mesmo com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql), que permite ao coach cadastrar alunos.
+   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) e [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real).
    - Pode rodar de novo sem problema: os arquivos não apagam nada.
 
 3. **Configurar o login**
@@ -65,19 +65,21 @@ O site funciona em dois modos:
 | `invoices` | Cobranças | Aluno dono; coach | Coach |
 | `exercise_videos` | Link do vídeo de cada exercício | Todos os logados | Coach |
 | `student_invites` | Alunos cadastrados pelo coach (nome, e-mail, plano, objetivo) | Coach | Coach |
+| `messages` | Chat: conversa de cada aluno com o coach, com confirmação de leitura | Aluno dono; coach | Quem participa da conversa, só em nome próprio. Ninguém edita nem apaga; só marca como lida |
 | Storage `assessment-photos` | Fotos das avaliações, em `<id do aluno>/...` | Aluno dono; coach | Aluno dono; coach |
 
 A função `busy_slots(de, até)` devolve só data, hora e duração das sessões de todos. Assim o aluno vê os horários ocupados sem ver com quem.
 
 ## Testes
 
-As regras de acesso têm 46 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
+As regras de acesso têm 57 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
 
 ```bash
 createdb teste
 psql -d teste -f supabase/tests/supabase_stub.sql
 psql -d teste -f supabase/migrations/0001_schema.sql
 psql -d teste -f supabase/migrations/0002_student_invites.sql
+psql -d teste -f supabase/migrations/0003_messages.sql
 psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PASSARAM"
 ```
 
@@ -85,6 +87,5 @@ psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PA
 
 ## Ainda não passa pelo banco
 
-- **Chat:** com o Supabase ligado, a tela de mensagens leva ao WhatsApp.
 - **Dieta e água:** continuam salvas só no aparelho do aluno.
 - **Pagamento:** o botão "Pagar" leva ao checkout da Prime Coaching. O coach marca como pago no Financeiro.

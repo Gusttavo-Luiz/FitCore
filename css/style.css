@@ -481,3 +481,13 @@ tr:last-child td { border-bottom: 0; }
 }
 .wa-float:hover { transform: scale(1.06); }
 .wa-float svg { width: 30px; height: 30px; }
+
+/* ---------- Chat do coach: lista de conversas + conversa ---------- */
+.chat-layout { grid-template-columns: 300px 1fr; align-items: start; }
+.thread-list { max-height: min(70vh, 640px); overflow-y: auto; }
+.thread.active { background: var(--surface-2); }
+.msg small { white-space: nowrap; }
+@media (max-width: 900px) {
+    .chat-layout { grid-template-columns: 1fr; }
+    .thread-list { max-height: 260px; }
+}

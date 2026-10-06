@@ -124,4 +124,25 @@ select t_assert((select full_name || '|' || plan || '|' || goal from profiles wh
 select t_assert((select accepted_at is not null from student_invites where email = 'carla@exemplo.com'), 'convite marcado como aceito');
 insert into auth.users (id, email, raw_user_meta_data) values ('55555555-5555-5555-5555-555555555555', 'semconvite@exemplo.com', '{"full_name":"Diego"}');
 select t_assert((select plan from profiles where id = '55555555-5555-5555-5555-555555555555') = 'Performance', 'sem convite, plano padrão');
+-- ===== Chat (0003) =====
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'ana', false);
+insert into messages (id, student_id, sender_id, body) values ('m1', :'ana', :'ana', 'Oi, coach!');
+select t_assert(true, 'aluna envia mensagem na própria conversa');
+select t_denied(format($$insert into messages (student_id, sender_id, body) values (%L, %L, 'x')$$, :'bruno', :'ana'), 'aluna não escreve na conversa de outro');
+select t_denied(format($$insert into messages (student_id, sender_id, body) values (%L, %L, 'x')$$, :'ana', :'coach'), 'aluna não envia em nome do coach');
+select t_denied(format($$insert into messages (student_id, sender_id, body) values (%L, %L, '')$$, :'ana', :'ana'), 'mensagem vazia é recusada');
+select set_config('request.jwt.claim.sub', :'coach', false);
+insert into messages (id, student_id, sender_id, body) values ('m2', :'ana', :'coach', 'Oi, Ana!'), ('m3', :'bruno', :'coach', 'Oi, Bruno!');
+select t_assert((select count(*) from messages) = 3, 'coach vê todas as conversas e responde');
+update messages set read_at = now() where id = 'm1';
+select t_assert((select read_at is not null from messages where id = 'm1'), 'coach marca como lida');
+select set_config('request.jwt.claim.sub', :'ana', false);
+select t_assert((select count(*) from messages) = 2, 'aluna vê só a própria conversa');
+select t_denied($$update messages set body = 'editado' where id = 'm2'$$, 'ninguém edita o texto de uma mensagem');
+update messages set read_at = now() where id = 'm2';
+select t_assert((select read_at is not null from messages where id = 'm2'), 'aluna marca a resposta como lida');
+select t_denied($$delete from messages where id = 'm1'$$, 'ninguém apaga mensagens');
+reset role;
+select t_assert(exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'messages'), 'mensagens ligadas ao tempo real');
 \echo TODOS OS TESTES PASSARAM

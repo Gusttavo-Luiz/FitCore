@@ -62,6 +62,8 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `README.md` | — | Resumo do projeto |
 | `supabase/migrations/0001_schema.sql` | — | Tabelas, regras de acesso (RLS) e Storage do banco |
 | `supabase/migrations/0002_student_invites.sql` | — | Cadastro de alunos pelo coach (convites) |
+| `supabase/migrations/0003_messages.sql` | — | Chat aluno ↔ coach com tempo real |
+| `js/features/chat.js` | — | Telas do chat com o Supabase (lista de conversas, tempo real, não lidas) |
 | `supabase/tests/` | — | Testes automáticos das regras de acesso (PostgreSQL local) |
 | `supabase/README.md` | — | Passo a passo para ligar o Supabase |
 | `docs/DOCUMENTACAO.md` | — | Este documento |
@@ -200,7 +202,7 @@ Os scripts carregam da esquerda para a direita; `app.js` concentra o estado e é
 
 O backend usa o Supabase: banco PostgreSQL, login por e-mail e senha e armazenamento de fotos. O site continua no GitHub Pages e fala direto com o Supabase. A segurança fica nas regras de acesso do banco (Row Level Security): o aluno só lê e grava os próprios dados, e o coach acessa os de todos.
 
-**Como ligar:** siga [supabase/README.md](../supabase/README.md). São seis passos: criar o projeto, rodar os dois arquivos SQL, configurar o login (e um SMTP para os e-mails), colar as duas chaves em `js/config.js`, tornar o Sidnei coach e publicar.
+**Como ligar:** siga [supabase/README.md](../supabase/README.md). São seis passos: criar o projeto, rodar os três arquivos SQL, configurar o login (e um SMTP para os e-mails), colar as duas chaves em `js/config.js`, tornar o Sidnei coach e publicar.
 
 **Como o site usa o banco (`js/backend.js`):**
 
@@ -220,9 +222,9 @@ O backend usa o Supabase: banco PostgreSQL, login por e-mail e senha e armazenam
 | Alunos (coach) | Formulário de cadastro (só no navegador) | Coach cadastra nome, e-mail, plano e objetivo; o aluno recebe um link por e-mail e cria a senha |
 | Dashboard do coach | Faturamento de exemplo | Soma das cobranças pagas por mês |
 | Dashboard do aluno | Meta de exemplo (78 kg) | Peso-meta definido pelo aluno no Perfil |
-| Mensagens | Chat de demonstração | Leva ao WhatsApp (chat no banco ainda não feito) |
+| Mensagens | Chat de demonstração (respostas automáticas) | Chat real em tempo real: o coach tem uma lista de conversas (uma por aluno, com busca e não lidas); as duas pontas veem quando a mensagem foi lida |
 
-**Testes:** 46 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 38 verificações: cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino e pagamento.
+**Testes:** 57 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 38 verificações (mais 16 do chat, com duas abas conversando em tempo real): cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino e pagamento.
 
 ## Dados e armazenamento
 
@@ -293,7 +295,8 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
-| 19 | — | Botão Editar na lista de Alunos: coach muda plano, objetivo e status (e o plano/objetivo de convites pendentes) |
+| 20 | — | Chat no banco: mensagens em tempo real entre aluno e coach, lista de conversas do coach, não lidas e confirmação de leitura |
+| 19 | `fd16c51` | Botão Editar na lista de Alunos: coach muda plano, objetivo e status (e o plano/objetivo de convites pendentes) |
 | 18 | `e6fea5b` | Coach cadastra alunos pelo site: convite por e-mail, tela "Crie sua senha", perfil já com plano e objetivo |
 | 17 | `57095e1` | Backend com Supabase: esquema do banco com regras de acesso (RLS) e Storage, login e cadastro reais, sincronização dos dados, guia de configuração e testes |
 | 16 | `bb1dc42` | Esta documentação adicionada ao repositório (`docs/DOCUMENTACAO.md`) |
@@ -322,7 +325,7 @@ O backend está pronto, mas ainda desligado: enquanto as chaves do Supabase não
 **Limitações atuais**
 
 - Modo demonstração (enquanto o Supabase não for ligado): login sem senha real e dados só no navegador.
-- Chat, dieta e água ainda não passam pelo banco.
+- Dieta e água ainda não passam pelo banco.
 - O envio padrão de e-mails do Supabase é limitado; para uso real, configurar um SMTP.
 - Pagamentos simulados: nenhum valor é cobrado.
 - Chat com respostas automáticas de demonstração.
@@ -342,7 +345,7 @@ O backend está pronto, mas ainda desligado: enquanto as chaves do Supabase não
 
 **Próximos passos técnicos sugeridos**
 
-1. Ligar o Supabase e levar chat, dieta e água para o banco.
+1. Ligar o Supabase e levar dieta e água para o banco.
 2. Pagamento real pela Prime Coaching ou por outro provedor (Mercado Pago, Stripe).
 3. Notificações por WhatsApp ou e-mail quando uma sessão for solicitada ou confirmada.
 4. Domínio próprio (ex.: sidneimuller.com.br) apontando para o GitHub Pages.
