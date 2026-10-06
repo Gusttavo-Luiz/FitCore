@@ -166,7 +166,8 @@ img { max-width: 100%; display: block; }
     display: flex; flex-direction: column; gap: 6px; position: sticky; top: 0; height: 100vh;
 }
 .sidebar .logo { padding: 4px 10px 20px; }
-.sidebar .logo-text { font-size: 18px; }
+.sidebar .logo { min-width: 0; }
+.sidebar .logo-text { font-size: 18px; white-space: nowrap; min-width: 0; overflow: hidden; }
 .sidebar .logo-text em { display: none; }
 .side-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); padding: 12px 12px 6px; }
 .side-link {
