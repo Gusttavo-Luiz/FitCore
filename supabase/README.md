@@ -49,6 +49,7 @@ O site funciona em dois modos:
 - **Coach cadastra (recomendado):** em **Alunos → Cadastrar aluno**, o coach informa nome, e-mail, plano e objetivo. O aluno recebe um e-mail com um link de acesso; ao clicar, entra no site e cria a própria senha. O perfil já nasce com o plano e o objetivo escolhidos.
 - **Aluno se cadastra sozinho:** em **Entrar → Criar conta**. Se o coach já tiver cadastrado aquele e-mail, o perfil também recebe o plano e o objetivo do convite.
 - Se o e-mail do convite não sair (ex.: limite de envios), o cadastro fica salvo e o aluno pode usar **Criar conta** com o mesmo e-mail.
+- Para mudar **plano, objetivo ou status** depois, o coach clica em **Editar** na linha do aluno, na lista de Alunos.
 
 ## O que fica no banco
 
@@ -87,4 +88,3 @@ psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PA
 - **Chat:** com o Supabase ligado, a tela de mensagens leva ao WhatsApp.
 - **Dieta e água:** continuam salvas só no aparelho do aluno.
 - **Pagamento:** o botão "Pagar" leva ao checkout da Prime Coaching. O coach marca como pago no Financeiro.
-- **Mudar plano ou status de um aluno já cadastrado:** pelo Supabase (Table Editor → `profiles`).

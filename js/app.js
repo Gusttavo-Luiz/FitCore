@@ -595,16 +595,55 @@ function bindChat(view) {
 // ---------- Páginas do personal ----------
 const statusBadge = s => ({ Ativo: 'green', Atenção: 'orange', Pendente: 'red', Convidado: 'blue' }[s] || '');
 
-function studentsTable(list) {
+// editable: mostra o botão "Editar" (plano, objetivo e status) em cada linha
+function studentsTable(list, { editable = false } = {}) {
     return `<div class="table-wrap"><table>
-        <thead><tr><th>Aluno</th><th>Plano</th><th>Objetivo</th><th>Aderência</th><th>Último treino</th><th>Vencimento</th><th>Status</th></tr></thead>
+        <thead><tr><th>Aluno</th><th>Plano</th><th>Objetivo</th><th>Aderência</th><th>Último treino</th><th>Vencimento</th><th>Status</th>${editable ? '<th></th>' : ''}</tr></thead>
         <tbody>${list.map(s => `<tr>
             <td><div class="cell-user"><div class="avatar" style="width:32px;height:32px;font-size:12px">${initials(s.name)}</div>${esc(s.name)}</div></td>
             <td>${s.plan}</td><td>${s.goal}</td>
             <td><div style="display:flex;align-items:center;gap:8px;min-width:120px"><div class="progress" style="flex:1"><span style="width:${s.adherence}%"></span></div>${s.adherence}%</div></td>
             <td class="muted">${s.lastWorkout}</td><td>${s.due}</td>
-            <td><span class="badge ${statusBadge(s.status)}">${s.status}</span></td></tr>`).join('')}</tbody>
+            <td><span class="badge ${statusBadge(s.status)}">${s.status}</span></td>
+            ${editable ? `<td><button class="btn btn-sm" data-edit-student="${esc(s.name)}">Editar</button></td>` : ''}</tr>`).join('')}</tbody>
     </table></div>`;
+}
+
+// Janela para o coach mudar plano, objetivo e status de um aluno
+function openStudentEditor(student) {
+    if (!student) return;
+    const invited = student.status === 'Convidado';
+    const opts = (list, cur) => list.map(o => `<option ${o === cur ? 'selected' : ''}>${o}</option>`).join('');
+    const m = modal(`
+        <h3>${esc(student.name)}</h3>
+        <p class="sub">${invited ? 'Convite ainda não aceito: o plano e o objetivo valem quando a conta for criada.' : 'Alterar plano, objetivo e status do aluno.'}</p>
+        <form id="student-edit">
+            <label class="field">Plano<select class="input" name="plan">${opts(Object.keys(SEED.planPrices), student.plan)}</select></label>
+            <p class="muted small" id="plan-price"></p>
+            <label class="field">Objetivo<select class="input" name="goal">${opts(['Hipertrofia', 'Emagrecimento', 'Condicionamento', 'Saúde'], student.goal)}</select></label>
+            ${invited ? '' : `<label class="field">Status<select class="input" name="status">${opts(['Ativo', 'Atenção', 'Pendente', 'Inativo'], student.status)}</select></label>`}
+            <p class="small down" id="edit-msg" hidden></p>
+            <button class="btn btn-primary btn-block" type="submit">Salvar</button>
+            <button class="btn btn-ghost btn-block" type="button" data-close>Cancelar</button>
+        </form>`);
+    const f = m.querySelector('#student-edit');
+    const price = () => { m.querySelector('#plan-price').textContent = `${money(SEED.planPrices[f.plan.value])}/mês — vale para as próximas cobranças.`; };
+    f.plan.onchange = price; price();
+    f.onsubmit = async e => {
+        e.preventDefault();
+        const data = { plan: f.plan.value, goal: f.goal.value, status: invited ? student.status : f.status.value };
+        const btn = f.querySelector('button[type=submit]');
+        btn.disabled = true;
+        try {
+            if (Backend.enabled) await Backend.updateStudent(student, data);
+            else { Object.assign(student, data); store.set('students', SEED.students); }
+            toast('Aluno atualizado!');
+            route();
+        } catch (err) {
+            const msg = m.querySelector('#edit-msg'); msg.hidden = false; msg.textContent = err.message;
+            btn.disabled = false;
+        }
+    };
 }
 
 // Alunos com conta + convites ainda não aceitos (só na lista de Alunos)
@@ -672,11 +711,11 @@ const trainerPages = {
                 <div class="card-head">
                     <input class="input" id="search" placeholder="Buscar aluno..." style="max-width:320px">
                     <select class="input" id="filter" style="max-width:180px">
-                        <option value="">Todos os status</option><option>Ativo</option><option>Atenção</option><option>Pendente</option>
+                        <option value="">Todos os status</option><option>Ativo</option><option>Atenção</option><option>Pendente</option><option>Inativo</option>
                         ${Backend.enabled ? '<option>Convidado</option>' : ''}
                     </select>
                 </div>
-                <div id="students">${studentsTable(allStudentsForList())}</div>
+                <div id="students">${studentsTable(allStudentsForList(), { editable: true })}</div>
             </div>
             <div class="card" style="margin-top:18px">
                 <div class="card-head"><h2>Cadastrar aluno</h2></div>
@@ -697,8 +736,12 @@ const trainerPages = {
             const update = () => {
                 const q = search.value.toLowerCase();
                 view.querySelector('#students').innerHTML = studentsTable(allStudentsForList().filter(s =>
-                    s.name.toLowerCase().includes(q) && (!filter.value || s.status === filter.value)));
+                    s.name.toLowerCase().includes(q) && (!filter.value || s.status === filter.value)), { editable: true });
+                bindEditButtons();
             };
+            const bindEditButtons = () => view.querySelectorAll('[data-edit-student]').forEach(b => b.onclick = () =>
+                openStudentEditor(allStudentsForList().find(s => s.name === b.dataset.editStudent)));
+            bindEditButtons();
             search.oninput = update; filter.onchange = update;
             const f = view.querySelector('#student-form');
             f.onsubmit = async e => {

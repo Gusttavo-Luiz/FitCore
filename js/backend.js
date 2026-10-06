@@ -98,6 +98,16 @@ const Backend = (() => {
         return error ? error.message : null;
     };
 
+    // Coach altera plano, objetivo e status de um aluno (ou de um convite ainda não aceito)
+    api.updateStudent = async (student, { plan, goal, status }) => {
+        if (student.email && !student.id) {
+            check(await sb.from('student_invites').update({ plan, goal }).eq('email', student.email));
+        } else {
+            check(await sb.from('profiles').update({ plan, goal, status }).eq('id', student.id));
+        }
+        await api.refreshStudents();
+    };
+
     api.signOut = async () => {
         await connect();
         await sb.auth.signOut();
@@ -208,7 +218,7 @@ const Backend = (() => {
             const open = state.invoices.filter(i => i.student === p.full_name && !i.paidAt).sort((a, b) => a.due.localeCompare(b.due));
             const lastDay = myDays.at(-1);
             return {
-                name: p.full_name || p.email, plan: p.plan, goal: p.goal, status: p.status,
+                id: p.id, name: p.full_name || p.email, plan: p.plan, goal: p.goal, status: p.status,
                 adherence: Math.min(100, Math.round(last28 / 20 * 100)), // meta: 5 treinos por semana
                 lastWorkout: !lastDay ? '—' : lastDay === today ? 'Hoje' : lastDay === offsetDate(-1) ? 'Ontem' : fmtDate(lastDay),
                 due: open[0] ? fmtDate(open[0].due, { day: '2-digit', month: '2-digit' }) : '—'

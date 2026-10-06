@@ -129,7 +129,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Tela | Endereço | O que faz |
 | --- | --- | --- |
 | Dashboard | `dashboard` | Alunos ativos, faturamento de 6 meses, aderência média, alunos em atenção |
-| Alunos | `alunos` | Lista com busca e filtro; cadastro de aluno |
+| Alunos | `alunos` | Lista com busca e filtro; cadastro de aluno; botão Editar para mudar plano, objetivo e status |
 | Fichas de treino | `fichas/<ficha>` | Criar, editar, reordenar, duplicar, excluir e copiar fichas de cada aluno |
 | Exercícios | `biblioteca/<exercício>` | Igual ao aluno, mais o campo para colar o link do vídeo (YouTube, Vimeo ou .mp4) |
 | Avaliações | `avaliacoes` | Avaliações de qualquer aluno |
@@ -293,7 +293,8 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
-| 18 | — | Coach cadastra alunos pelo site: convite por e-mail, tela "Crie sua senha", perfil já com plano e objetivo |
+| 19 | — | Botão Editar na lista de Alunos: coach muda plano, objetivo e status (e o plano/objetivo de convites pendentes) |
+| 18 | `e6fea5b` | Coach cadastra alunos pelo site: convite por e-mail, tela "Crie sua senha", perfil já com plano e objetivo |
 | 17 | `57095e1` | Backend com Supabase: esquema do banco com regras de acesso (RLS) e Storage, login e cadastro reais, sincronização dos dados, guia de configuração e testes |
 | 16 | `bb1dc42` | Esta documentação adicionada ao repositório (`docs/DOCUMENTACAO.md`) |
 | 15 | `e09fa1b` | Removida a faixa "Feedbacks e evolução do time" e o link Feedbacks do menu |
@@ -322,7 +323,6 @@ O backend está pronto, mas ainda desligado: enquanto as chaves do Supabase não
 
 - Modo demonstração (enquanto o Supabase não for ligado): login sem senha real e dados só no navegador.
 - Chat, dieta e água ainda não passam pelo banco.
-- Mudar plano ou status de um aluno já cadastrado ainda é feito no Supabase.
 - O envio padrão de e-mails do Supabase é limitado; para uso real, configurar um SMTP.
 - Pagamentos simulados: nenhum valor é cobrado.
 - Chat com respostas automáticas de demonstração.
