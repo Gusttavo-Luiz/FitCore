@@ -27,7 +27,7 @@ trainerPages.fichas = {
                     ${SEED.students.filter(s => s.name !== fichaStudent && planOf(s.name).length)
                         .map(s => `<option>${esc(s.name)}</option>`).join('')}</select>`}
             </div>
-            ${fichaStudent === CLIENT ? '<p class="muted small" style="margin-top:10px">💡 As fichas do Lucas aparecem na área do aluno desta demonstração.</p>' : ''}
+            ${!Backend.enabled && fichaStudent === CLIENT ? '<p class="muted small" style="margin-top:10px">💡 As fichas do Lucas aparecem na área do aluno desta demonstração.</p>' : ''}
         </div>`;
         if (!w) return toolbar + '<div class="card empty">Este aluno ainda não tem fichas. Crie uma nova ou copie de outro aluno.</div>';
 

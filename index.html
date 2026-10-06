@@ -9,8 +9,8 @@
     <meta name="description" content="Consultoria online de hipertrofia com Sidnei Muller. Construa seu físico treinando 1h por dia.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=202610061557">
-    <script src="js/config.js?v=202610061557"></script>
+    <link rel="stylesheet" href="css/style.css?v=202610061721">
+    <script src="js/config.js?v=202610061721"></script>
 </head>
 <body>
     <header class="nav">
@@ -130,7 +130,7 @@
                 <label class="field" id="name-field">Nome
                     <input class="input" name="name" placeholder="Seu nome completo" value="Lucas Andrade" autocomplete="name">
                 </label>
-                <label class="field">E-mail
+                <label class="field" id="email-field">E-mail
                     <input class="input" type="email" name="email" placeholder="voce@email.com" value="lucas@email.com" required autocomplete="email">
                 </label>
                 <label class="field">Senha
@@ -144,7 +144,7 @@
         </div>
     </div>
 
-    <script src="js/backend.js?v=202610061557"></script>
+    <script src="js/backend.js?v=202610061721"></script>
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
 
@@ -171,8 +171,20 @@
             form.email.value = r === 'personal' ? 'coach@email.com' : 'lucas@email.com';
         }
 
-        // Com o Supabase: entrar ou criar conta
+        // Com o Supabase: entrar, criar conta ou definir senha (depois do link do e-mail)
         function setMode(m) {
+            if (m === 'password') {
+                mode = m;
+                ['mode-switch', 'name-field', 'email-field', 'forgot'].forEach(id => document.getElementById(id).hidden = true);
+                form.name.required = form.email.required = false;
+                form.password.value = '';
+                form.password.autocomplete = 'new-password';
+                document.getElementById('login-title').textContent = 'Crie sua senha';
+                document.getElementById('login-sub').textContent = 'Você vai usar esta senha (mínimo de 6 caracteres) para entrar das próximas vezes.';
+                submit.textContent = 'Salvar senha e entrar';
+                say('');
+                return;
+            }
             mode = m;
             modeButtons.forEach(b => b.classList.toggle('active', b.dataset.mode === m));
             document.getElementById('name-field').hidden = m !== 'signup';
@@ -181,7 +193,30 @@
             document.getElementById('login-title').textContent = m === 'signup' ? 'Criar conta' : 'Entrar';
             submit.textContent = m === 'signup' ? 'Criar conta' : 'Entrar';
             document.getElementById('forgot').hidden = m === 'signup';
+            document.getElementById('email-field').hidden = false;
+            form.email.required = true;
             say('');
+        }
+
+        // Voltou do link do e-mail (convite do coach ou "esqueci minha senha")
+        async function handleEmailLink() {
+            modal.classList.add('open');
+            try {
+                const type = await Backend.handleRedirect();
+                setMode('password');
+                const skip = document.getElementById('close-login');
+                if (type === 'recovery') {
+                    document.getElementById('login-title').textContent = 'Nova senha';
+                    skip.hidden = true;
+                } else {
+                    // Convite: pode criar a senha agora ou depois (pelo "Esqueci minha senha")
+                    skip.textContent = 'Agora não, só entrar';
+                    skip.onclick = () => { location.href = 'app.html#/' + Backend.siteUser(Backend.profile).role + '/dashboard'; };
+                }
+            } catch (err) {
+                setMode('login');
+                say(err.message);
+            }
         }
 
         if (Backend.enabled) {
@@ -190,6 +225,7 @@
             document.getElementById('login-sub').textContent = 'Use seu e-mail e senha.';
             form.name.value = form.email.value = form.password.value = '';
             setMode('login');
+            if (Backend.hasAuthRedirect()) handleEmailLink();
         }
 
         document.querySelectorAll('[data-open-login]').forEach(el => el.addEventListener('click', () => {
@@ -221,7 +257,9 @@
             say('');
             try {
                 const email = form.email.value.trim(), password = form.password.value;
-                if (mode === 'signup') {
+                if (mode === 'password') {
+                    await Backend.updatePassword(password);
+                } else if (mode === 'signup') {
                     const needsConfirm = await Backend.signUp(form.name.value.trim(), email, password);
                     if (needsConfirm) {
                         say('Conta criada! Confirme pelo link que enviamos para o seu e-mail e depois entre.', true);

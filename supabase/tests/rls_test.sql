@@ -109,5 +109,19 @@ update invoices set paid_at = current_date, method = 'Pix' where id = 'i-ana';
 select t_assert((select count(*) from assessments) = 1 and (select count(*) from storage.objects) = 1, 'coach vê avaliação e fotos da Ana');
 delete from sessions where id = 's-pedido';
 select t_assert((select count(*) from sessions) = 2, 'coach confirma, marca pago e exclui');
+-- ===== Convites (0002) =====
+insert into student_invites (email, full_name, plan, goal, invited_by)
+  values ('carla@exemplo.com', 'Carla Souza', 'Premium', 'Emagrecimento', :'coach');
+select t_assert((select count(*) from student_invites) = 1, 'coach cadastra convite');
+select set_config('request.jwt.claim.sub', :'ana', false);
+select t_assert((select count(*) from student_invites) = 0, 'aluna não vê convites');
+select t_denied($$insert into student_invites (email, full_name) values ('x@exemplo.com', 'X')$$, 'aluna não cria convite');
 reset role;
+-- O Supabase cria a conta (link do convite ou "Criar conta"), sem nome nos metadados
+insert into auth.users (id, email) values ('44444444-4444-4444-4444-444444444444', 'Carla@Exemplo.com');
+select t_assert((select full_name || '|' || plan || '|' || goal from profiles where id = '44444444-4444-4444-4444-444444444444')
+                = 'Carla Souza|Premium|Emagrecimento', 'perfil nasce com nome, plano e objetivo do convite (e-mail sem diferenciar maiúsculas)');
+select t_assert((select accepted_at is not null from student_invites where email = 'carla@exemplo.com'), 'convite marcado como aceito');
+insert into auth.users (id, email, raw_user_meta_data) values ('55555555-5555-5555-5555-555555555555', 'semconvite@exemplo.com', '{"full_name":"Diego"}');
+select t_assert((select plan from profiles where id = '55555555-5555-5555-5555-555555555555') = 'Performance', 'sem convite, plano padrão');
 \echo TODOS OS TESTES PASSARAM

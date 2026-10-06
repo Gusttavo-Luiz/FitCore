@@ -16,13 +16,15 @@ O site funciona em dois modos:
 2. **Criar as tabelas e as regras de segurança**
    - No projeto, abra **SQL Editor → New query**.
    - Cole o conteúdo inteiro de [`migrations/0001_schema.sql`](migrations/0001_schema.sql) e clique em **Run**.
-   - Pode rodar de novo sem problema: o arquivo não apaga nada.
+   - Faça o mesmo com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql), que permite ao coach cadastrar alunos.
+   - Pode rodar de novo sem problema: os arquivos não apagam nada.
 
 3. **Configurar o login**
    - **Authentication → URL Configuration**:
      - *Site URL*: `https://gusttavo-luiz.github.io/FitCore/`
      - *Redirect URLs*: adicione `https://gusttavo-luiz.github.io/FitCore/index.html`
    - **Authentication → Providers → Email**: deixe ativado. Se *Confirm email* estiver ligado, o aluno precisa clicar no link do e-mail antes do primeiro login (recomendado).
+   - **E-mails:** o envio padrão do Supabase serve para testes e manda só poucos e-mails por hora. Para uso real (convites e "esqueci minha senha"), configure um SMTP em **Authentication → Emails → SMTP Settings** (ex.: Resend, Brevo ou o Gmail do Sidnei).
 
 4. **Ligar o site ao Supabase**
    - Em **Project Settings → API**, copie a **Project URL** e a chave **anon public**.
@@ -40,7 +42,13 @@ O site funciona em dois modos:
      update public.profiles set role = 'coach' where email = 'email-do-sidnei@exemplo.com';
      ```
 
-6. **Publicar**: envie para a `main`. A partir daí, cada aluno cria a própria conta no site e aparece na lista do coach.
+6. **Publicar**: envie para a `main`.
+
+## Como os alunos entram
+
+- **Coach cadastra (recomendado):** em **Alunos → Cadastrar aluno**, o coach informa nome, e-mail, plano e objetivo. O aluno recebe um e-mail com um link de acesso; ao clicar, entra no site e cria a própria senha. O perfil já nasce com o plano e o objetivo escolhidos.
+- **Aluno se cadastra sozinho:** em **Entrar → Criar conta**. Se o coach já tiver cadastrado aquele e-mail, o perfil também recebe o plano e o objetivo do convite.
+- Se o e-mail do convite não sair (ex.: limite de envios), o cadastro fica salvo e o aluno pode usar **Criar conta** com o mesmo e-mail.
 
 ## O que fica no banco
 
@@ -55,18 +63,20 @@ O site funciona em dois modos:
 | `sessions` | Agenda | Aluno dono; coach | Aluno: só pede (pendente), remarca ou cancela. Coach: tudo |
 | `invoices` | Cobranças | Aluno dono; coach | Coach |
 | `exercise_videos` | Link do vídeo de cada exercício | Todos os logados | Coach |
+| `student_invites` | Alunos cadastrados pelo coach (nome, e-mail, plano, objetivo) | Coach | Coach |
 | Storage `assessment-photos` | Fotos das avaliações, em `<id do aluno>/...` | Aluno dono; coach | Aluno dono; coach |
 
 A função `busy_slots(de, até)` devolve só data, hora e duração das sessões de todos. Assim o aluno vê os horários ocupados sem ver com quem.
 
 ## Testes
 
-As regras de acesso têm 40 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
+As regras de acesso têm 46 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
 
 ```bash
 createdb teste
 psql -d teste -f supabase/tests/supabase_stub.sql
 psql -d teste -f supabase/migrations/0001_schema.sql
+psql -d teste -f supabase/migrations/0002_student_invites.sql
 psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PASSARAM"
 ```
 
@@ -77,4 +87,4 @@ psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PA
 - **Chat:** com o Supabase ligado, a tela de mensagens leva ao WhatsApp.
 - **Dieta e água:** continuam salvas só no aparelho do aluno.
 - **Pagamento:** o botão "Pagar" leva ao checkout da Prime Coaching. O coach marca como pago no Financeiro.
-- **Cadastro de aluno pelo coach:** o aluno cria a própria conta. Plano e status são alterados no Supabase (Table Editor → `profiles`).
+- **Mudar plano ou status de um aluno já cadastrado:** pelo Supabase (Table Editor → `profiles`).

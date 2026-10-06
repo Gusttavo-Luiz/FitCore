@@ -64,6 +64,40 @@ const Backend = (() => {
         check(await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href.replace(/[^/]*$/, 'index.html') }));
     };
 
+    // Depois de clicar no link do e-mail (convite ou "esqueci a senha"), o Supabase
+    // volta para index.html com o login no endereço. Devolve o tipo do link.
+    api.hasAuthRedirect = () => /access_token=|[?&]code=|type=(recovery|magiclink|invite|signup)/.test(location.href);
+    api.handleRedirect = async () => {
+        const params = new URLSearchParams(location.hash.slice(1) || location.search.slice(1));
+        const type = params.get('type') || 'magiclink';
+        if (params.get('error_description')) throw new Error(params.get('error_description').replace(/\+/g, ' '));
+        await connect();
+        const { data: { session } } = await sb.auth.getSession();
+        if (!session) throw new Error('O link expirou ou já foi usado. Peça um novo.');
+        history.replaceState(null, '', location.pathname);
+        await api.loadProfile();
+        return type;
+    };
+
+    api.updatePassword = async password => {
+        await connect();
+        check(await sb.auth.updateUser({ password }));
+    };
+
+    // Coach cadastra um aluno: guarda o convite e envia o link de acesso por e-mail.
+    // Devolve null se o e-mail saiu, ou a mensagem de erro do envio (o convite fica salvo).
+    api.inviteStudent = async ({ name, email, plan, goal }) => {
+        email = email.trim().toLowerCase();
+        if (api.people.some(p => (p.email || '').toLowerCase() === email)) throw new Error('Já existe uma conta com esse e-mail.');
+        check(await sb.from('student_invites').upsert({ email, full_name: name, plan, goal, invited_by: api.profile.id }));
+        const { error } = await sb.auth.signInWithOtp({
+            email,
+            options: { shouldCreateUser: true, data: { full_name: name }, emailRedirectTo: location.href.replace(/[^/]*$/, 'index.html') }
+        });
+        await api.refreshStudents();
+        return error ? error.message : null;
+    };
+
     api.signOut = async () => {
         await connect();
         await sb.auth.signOut();
@@ -149,7 +183,25 @@ const Backend = (() => {
             });
         });
 
-        // Lista de alunos do coach, com números calculados a partir dos dados reais
+        api.days = days;
+        await api.refreshStudents();
+
+        // O aluno não pode ler a agenda dos outros; para não marcar horário em cima
+        // de outra pessoa, busca só os horários ocupados (sem nomes)
+        state.busySlots = isCoach() ? [] : check(await sb.rpc('busy_slots', { from_date: today, to_date: offsetDate(120) }))
+            .map(r => ({ id: r.id, date: r.date, time: r.time.slice(0, 5), duration: r.duration }));
+
+        snapshotAll();
+        return true;
+    };
+
+    // Lista de alunos do coach, com números calculados a partir dos dados reais.
+    // Convites ainda sem conta aparecem como "Convidado".
+    api.refreshStudents = async () => {
+        if (isCoach()) api.people = check(await sb.from('profiles').select('*').order('full_name'));
+        const students = api.people.filter(p => p.role === 'aluno');
+        const days = api.days || [];
+        const invites = isCoach() ? check(await sb.from('student_invites').select('*').is('accepted_at', null)) : [];
         SEED.students = students.map(p => {
             const myDays = days.filter(d => d.student_id === p.id).map(d => d.date).sort();
             const last28 = myDays.filter(d => d >= offsetDate(-28)).length;
@@ -162,14 +214,10 @@ const Backend = (() => {
                 due: open[0] ? fmtDate(open[0].due, { day: '2-digit', month: '2-digit' }) : '—'
             };
         });
-
-        // O aluno não pode ler a agenda dos outros; para não marcar horário em cima
-        // de outra pessoa, busca só os horários ocupados (sem nomes)
-        state.busySlots = isCoach() ? [] : check(await sb.rpc('busy_slots', { from_date: today, to_date: offsetDate(120) }))
-            .map(r => ({ id: r.id, date: r.date, time: r.time.slice(0, 5), duration: r.duration }));
-
-        snapshotAll();
-        return true;
+        // Ficam fora de SEED.students: sem conta ainda, não há onde salvar fichas ou agenda
+        SEED.invites = invites.map(i => ({
+            name: i.full_name, email: i.email, plan: i.plan, goal: i.goal, status: 'Convidado', adherence: 0, lastWorkout: '—', due: '—'
+        }));
     };
 
     // ---------- Sincronização ----------

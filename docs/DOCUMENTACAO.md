@@ -61,6 +61,7 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `.nojekyll` | — | Faz o GitHub Pages publicar os arquivos sem processá-los |
 | `README.md` | — | Resumo do projeto |
 | `supabase/migrations/0001_schema.sql` | — | Tabelas, regras de acesso (RLS) e Storage do banco |
+| `supabase/migrations/0002_student_invites.sql` | — | Cadastro de alunos pelo coach (convites) |
 | `supabase/tests/` | — | Testes automáticos das regras de acesso (PostgreSQL local) |
 | `supabase/README.md` | — | Passo a passo para ligar o Supabase |
 | `docs/DOCUMENTACAO.md` | — | Este documento |
@@ -199,14 +200,15 @@ Os scripts carregam da esquerda para a direita; `app.js` concentra o estado e é
 
 O backend usa o Supabase: banco PostgreSQL, login por e-mail e senha e armazenamento de fotos. O site continua no GitHub Pages e fala direto com o Supabase. A segurança fica nas regras de acesso do banco (Row Level Security): o aluno só lê e grava os próprios dados, e o coach acessa os de todos.
 
-**Como ligar:** siga [supabase/README.md](../supabase/README.md). São seis passos: criar o projeto, rodar o SQL, configurar o login, colar as duas chaves em `js/config.js`, tornar o Sidnei coach e publicar.
+**Como ligar:** siga [supabase/README.md](../supabase/README.md). São seis passos: criar o projeto, rodar os dois arquivos SQL, configurar o login (e um SMTP para os e-mails), colar as duas chaves em `js/config.js`, tornar o Sidnei coach e publicar.
 
 **Como o site usa o banco (`js/backend.js`):**
 
 1. **Login:** a janela "Entrar" ganha as abas *Entrar* e *Criar conta*, com mensagens de erro em português e "Esqueci minha senha". Toda conta nova nasce como aluno.
-2. **Carregamento:** ao abrir `app.html`, `Backend.boot()` confere o login (sem login, volta para a página inicial) e carrega fichas, treinos, medições, avaliações, agenda, cobranças e vídeos para o objeto `state`.
-3. **Salvamento:** as telas não mudaram. Elas alteram `state` e chamam `save()`, que agora chama `Backend.queueSync()`. A sincronização compara cada coleção com o último estado do banco e envia só o que mudou: inclusões, alterações e exclusões.
-4. **Fotos:** vão para o Storage na pasta do aluno. O banco guarda o caminho, e na hora de exibir o site gera links temporários de 6 horas.
+2. **Cadastro pelo coach:** em Alunos, o coach informa nome, e-mail, plano e objetivo. O site grava um convite (`student_invites`) e o Supabase envia um link de acesso. Ao clicar, o aluno vê "Crie sua senha" e entra; o perfil já nasce com o plano e o objetivo do convite.
+3. **Carregamento:** ao abrir `app.html`, `Backend.boot()` confere o login (sem login, volta para a página inicial) e carrega fichas, treinos, medições, avaliações, agenda, cobranças e vídeos para o objeto `state`.
+4. **Salvamento:** as telas não mudaram. Elas alteram `state` e chamam `save()`, que agora chama `Backend.queueSync()`. A sincronização compara cada coleção com o último estado do banco e envia só o que mudou: inclusões, alterações e exclusões.
+5. **Fotos:** vão para o Storage na pasta do aluno. O banco guarda o caminho, e na hora de exibir o site gera links temporários de 6 horas.
 
 **Mudanças de comportamento com o Supabase ligado:**
 
@@ -215,12 +217,12 @@ O backend usa o Supabase: banco PostgreSQL, login por e-mail e senha e armazenam
 | Menu | Botão "Ver como coach / aluno" | Cada um vê só a própria área |
 | Agenda (aluno) | Conflito com as sessões de exemplo | Conflito com os horários ocupados de todos, sem nomes (`busy_slots`) |
 | Pagamentos (aluno) | Pagamento simulado | "Pagar" leva ao checkout; o coach marca como pago |
-| Alunos (coach) | Formulário de cadastro | O aluno cria a própria conta e aparece na lista |
+| Alunos (coach) | Formulário de cadastro (só no navegador) | Coach cadastra nome, e-mail, plano e objetivo; o aluno recebe um link por e-mail e cria a senha |
 | Dashboard do coach | Faturamento de exemplo | Soma das cobranças pagas por mês |
 | Dashboard do aluno | Meta de exemplo (78 kg) | Peso-meta definido pelo aluno no Perfil |
 | Mensagens | Chat de demonstração | Leva ao WhatsApp (chat no banco ainda não feito) |
 
-**Testes:** 40 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 24 verificações: cadastro, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino e pagamento.
+**Testes:** 46 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 38 verificações: cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino e pagamento.
 
 ## Dados e armazenamento
 
@@ -291,7 +293,8 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
-| 17 | — | Backend com Supabase: esquema do banco com regras de acesso (RLS) e Storage, login e cadastro reais, sincronização dos dados, guia de configuração e testes |
+| 18 | — | Coach cadastra alunos pelo site: convite por e-mail, tela "Crie sua senha", perfil já com plano e objetivo |
+| 17 | `57095e1` | Backend com Supabase: esquema do banco com regras de acesso (RLS) e Storage, login e cadastro reais, sincronização dos dados, guia de configuração e testes |
 | 16 | `bb1dc42` | Esta documentação adicionada ao repositório (`docs/DOCUMENTACAO.md`) |
 | 15 | `e09fa1b` | Removida a faixa "Feedbacks e evolução do time" e o link Feedbacks do menu |
 | 14 | `bcde158` | Mantidos só os botões de WhatsApp e Instagram da caixa do cupom e o botão flutuante; saíram os do rodapé, da faixa de feedbacks e do menu lateral |
@@ -319,7 +322,8 @@ O backend está pronto, mas ainda desligado: enquanto as chaves do Supabase não
 
 - Modo demonstração (enquanto o Supabase não for ligado): login sem senha real e dados só no navegador.
 - Chat, dieta e água ainda não passam pelo banco.
-- O coach não cadastra aluno pelo site: o aluno cria a própria conta.
+- Mudar plano ou status de um aluno já cadastrado ainda é feito no Supabase.
+- O envio padrão de e-mails do Supabase é limitado; para uso real, configurar um SMTP.
 - Pagamentos simulados: nenhum valor é cobrado.
 - Chat com respostas automáticas de demonstração.
 - Vídeos dos exercícios não vêm prontos; o coach cola o link de cada um.

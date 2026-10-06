@@ -593,7 +593,7 @@ function bindChat(view) {
 }
 
 // ---------- Páginas do personal ----------
-const statusBadge = s => ({ Ativo: 'green', Atenção: 'orange', Pendente: 'red' }[s] || '');
+const statusBadge = s => ({ Ativo: 'green', Atenção: 'orange', Pendente: 'red', Convidado: 'blue' }[s] || '');
 
 function studentsTable(list) {
     return `<div class="table-wrap"><table>
@@ -605,6 +605,11 @@ function studentsTable(list) {
             <td class="muted">${s.lastWorkout}</td><td>${s.due}</td>
             <td><span class="badge ${statusBadge(s.status)}">${s.status}</span></td></tr>`).join('')}</tbody>
     </table></div>`;
+}
+
+// Alunos com conta + convites ainda não aceitos (só na lista de Alunos)
+function allStudentsForList() {
+    return [...SEED.students, ...(SEED.invites || [])];
 }
 
 // Soma das cobranças pagas em cada um dos últimos 6 meses
@@ -658,46 +663,69 @@ const trainerPages = {
 
     alunos: {
         title: () => 'Alunos',
-        sub: () => `${SEED.students.length} alunos cadastrados`,
+        sub: () => `${SEED.students.length} alunos cadastrados` + ((SEED.invites || []).length ? ` • ${SEED.invites.length} convite(s) pendente(s)` : ''),
         render() {
+            const planOpts = Object.keys(SEED.planPrices).map(p => `<option ${p === 'Performance' ? 'selected' : ''}>${p}</option>`).join('');
+            const goalOpts = ['Hipertrofia', 'Emagrecimento', 'Condicionamento', 'Saúde'].map(g => `<option>${g}</option>`).join('');
             return `
             <div class="card">
                 <div class="card-head">
                     <input class="input" id="search" placeholder="Buscar aluno..." style="max-width:320px">
                     <select class="input" id="filter" style="max-width:180px">
                         <option value="">Todos os status</option><option>Ativo</option><option>Atenção</option><option>Pendente</option>
+                        ${Backend.enabled ? '<option>Convidado</option>' : ''}
                     </select>
                 </div>
-                <div id="students">${studentsTable(SEED.students)}</div>
+                <div id="students">${studentsTable(allStudentsForList())}</div>
             </div>
-            ${Backend.enabled ? `<div class="card" style="margin-top:18px">
-                <div class="card-head"><h2>Novo aluno</h2></div>
-                <p class="muted small">Envie o link do site para o aluno criar a conta em "Entrar → Criar conta".
-                Assim que ele se cadastrar, aparece nesta lista. Para mudar plano ou status, use o Supabase (tabela profiles).</p>
-            </div>` : `<div class="card" style="margin-top:18px">
+            <div class="card" style="margin-top:18px">
                 <div class="card-head"><h2>Cadastrar aluno</h2></div>
+                ${Backend.enabled ? `<p class="muted small" style="margin-bottom:14px">O aluno recebe um e-mail com um link de acesso.
+                    Ao clicar, entra no site e cria a própria senha. O plano e o objetivo já ficam no perfil dele.</p>` : ''}
                 <form id="student-form" class="form-row">
-                    <label class="field">Nome<input class="input" name="name" required></label>
-                    <label class="field">Plano<select class="input" name="plan"><option>Essencial</option><option>Performance</option><option>Premium</option></select></label>
-                    <label class="field">Objetivo<select class="input" name="goal"><option>Hipertrofia</option><option>Emagrecimento</option><option>Condicionamento</option><option>Saúde</option></select></label>
-                    <button class="btn btn-primary" type="submit">Adicionar</button>
+                    <label class="field">Nome<input class="input" name="name" required autocomplete="off"></label>
+                    ${Backend.enabled ? '<label class="field">E-mail<input class="input" type="email" name="email" required autocomplete="off"></label>' : ''}
+                    <label class="field">Plano<select class="input" name="plan">${planOpts}</select></label>
+                    <label class="field">Objetivo<select class="input" name="goal">${goalOpts}</select></label>
+                    <button class="btn btn-primary" type="submit">${Backend.enabled ? 'Cadastrar e enviar convite' : 'Adicionar'}</button>
                 </form>
-            </div>`}`;
+                <p class="small" id="invite-msg" hidden></p>
+            </div>`;
         },
         bind(view) {
             const search = view.querySelector('#search'), filter = view.querySelector('#filter');
             const update = () => {
                 const q = search.value.toLowerCase();
-                view.querySelector('#students').innerHTML = studentsTable(SEED.students.filter(s =>
+                view.querySelector('#students').innerHTML = studentsTable(allStudentsForList().filter(s =>
                     s.name.toLowerCase().includes(q) && (!filter.value || s.status === filter.value)));
             };
             search.oninput = update; filter.onchange = update;
             const f = view.querySelector('#student-form');
-            if (f) f.onsubmit = e => {
+            f.onsubmit = async e => {
                 e.preventDefault();
-                SEED.students.push({ name: f.name.value.trim(), plan: f.plan.value, goal: f.goal.value, adherence: 0, lastWorkout: '—', status: 'Pendente', due: '—' });
-                store.set('students', SEED.students);
-                toast('Aluno cadastrado!'); route();
+                const data = { name: f.name.value.trim(), plan: f.plan.value, goal: f.goal.value };
+                if (!Backend.enabled) {
+                    SEED.students.push({ ...data, adherence: 0, lastWorkout: '—', status: 'Pendente', due: '—' });
+                    store.set('students', SEED.students);
+                    toast('Aluno cadastrado!'); route();
+                    return;
+                }
+                const btn = f.querySelector('button'), msg = view.querySelector('#invite-msg');
+                btn.disabled = true;
+                try {
+                    const mailError = await Backend.inviteStudent({ ...data, email: f.email.value });
+                    if (!mailError) { toast(`Convite enviado para ${f.email.value.trim()}`); route(); return; }
+                    // O convite ficou salvo; só o e-mail falhou (ex.: limite de envios do Supabase)
+                    route();
+                    const m = $('#invite-msg');
+                    m.hidden = false; m.className = 'small down';
+                    m.textContent = `Aluno cadastrado, mas o e-mail não foi enviado (${mailError}). ` +
+                        'Ele pode entrar em "Criar conta" no site com esse mesmo e-mail: o plano e o objetivo já ficam no perfil.';
+                } catch (err) {
+                    msg.hidden = false; msg.className = 'small down'; msg.textContent = err.message;
+                } finally {
+                    btn.disabled = false;
+                }
             };
         }
     },
