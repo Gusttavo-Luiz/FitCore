@@ -326,7 +326,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
-| 31 | `PENDING` | Instalação do banco num arquivo só (`supabase/setup.sql`) e consulta de conferência (`supabase/check.sql`); guia atualizado |
+| 31 | `b5c8a47` | Instalação do banco num arquivo só (`supabase/setup.sql`) e consulta de conferência (`supabase/check.sql`); guia atualizado |
 | 30 | `a6c4d5a` | Planos e preços no banco (nova aba Financeiro → Planos e preços: editar preço, criar e remover plano) e mensalidades geradas automaticamente todo dia 1º (migração 0009); Pagamentos do aluno mostra o plano do perfil |
 | 29 | `ac61eb6` | Vencimento definido pelo coach: campo "1º vencimento" no cadastro (cria a 1ª mensalidade), dia do vencimento editável em Editar (cobranças em aberto acompanham), mensalidades em lote usam esse dia; migração 0008 |
 | 28 | `d91d6f3` | Dieta no banco: o coach monta o plano alimentar de cada aluno (nova tela Dietas) e o aluno registra água e refeições do dia; migração 0007 com regras de acesso e testes |
