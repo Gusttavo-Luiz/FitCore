@@ -145,6 +145,29 @@ select t_assert((select read_at is not null from messages where id = 'm2'), 'alu
 select t_denied($$delete from messages where id = 'm1'$$, 'ninguém apaga mensagens');
 reset role;
 select t_assert(exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'messages'), 'mensagens ligadas ao tempo real');
+-- ===== Dieta e registro diário (0007) =====
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'coach', false);
+insert into diet_plans (student_id, kcal, protein, water_ml, meals) values
+  (:'ana', 2000, 150, 2500, '[{"name":"Almoço","time":"13:00","kcal":600,"items":["Frango","Arroz"]}]'),
+  (:'bruno', 2800, 200, 3500, '[]');
+select t_assert((select count(*) from diet_plans) = 2, 'coach monta a dieta de cada aluno');
+select t_denied($$insert into diet_plans (student_id, meals) values ('22222222-2222-2222-2222-222222222222', '{}')$$, 'refeições precisam ser uma lista');
+select set_config('request.jwt.claim.sub', :'ana', false);
+select t_assert((select count(*) from diet_plans) = 1 and (select kcal from diet_plans) = 2000, 'aluna lê só a própria dieta');
+update diet_plans set kcal = 5000 where student_id = :'ana';
+select t_assert((select kcal from diet_plans) = 2000, 'aluna não altera a dieta (nenhuma linha muda)');
+select t_denied(format($$insert into diet_plans (student_id) values (%L)$$, :'ana'), 'aluna não cria dieta');
+insert into daily_logs (student_id, date, water_ml, meals_done) values (:'ana', current_date, 750, '{0}');
+update daily_logs set water_ml = 1000, meals_done = '{0,1}' where student_id = :'ana' and date = current_date;
+select t_assert((select water_ml from daily_logs) = 1000, 'aluna registra água e refeições do dia');
+select t_denied(format($$insert into daily_logs (student_id, date) values (%L, current_date)$$, :'bruno'), 'aluna não registra o dia de outro');
+select t_denied(format($$insert into daily_logs (student_id, date, water_ml) values (%L, current_date - 1, -5)$$, :'ana'), 'água negativa é recusada');
+select set_config('request.jwt.claim.sub', :'bruno', false);
+select t_assert((select count(*) from daily_logs) = 0 and (select count(*) from diet_plans) = 1, 'Bruno não vê o registro nem a dieta da Ana');
+select set_config('request.jwt.claim.sub', :'coach', false);
+select t_assert((select meals_done from daily_logs where student_id = :'ana') = '{0,1}', 'coach acompanha o registro do dia da aluna');
+reset role;
 -- ===== Despesas (0005) =====
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'coach', false);

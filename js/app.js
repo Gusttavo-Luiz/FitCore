@@ -29,7 +29,10 @@ const state = {
     progress: store.get('progress', SEED.progress),
     // Chat: carregado em js/features/chat.js (demonstração) ou em backend.js (Supabase)
     chat: [],
-    water: store.get('water_' + today, 0),
+    // Plano alimentar de cada aluno (montado pelo coach em Dietas)
+    diets: store.get('diets', { [CLIENT]: { ...SEED.macros, water: 3000, meals: SEED.meals, notes: '' } }),
+    // Registro do dia por aluno: { 'Lucas Andrade': { '2026-10-07': { water: 750, meals: [0, 2] } } }
+    dailyLogs: store.get('dailyLogs', null) || legacyDailyLog(),
     profile: store.get('profile', { height: 178, age: 29, phone: '(11) 98765-4321' }),
     // Fichas de treino por aluno: { 'Lucas Andrade': [ficha, ...] }
     plans: store.get('plans', { [CLIENT]: SEED.workouts.map(w => ({ ...w, notes: DEFAULT_NOTES })) }),
@@ -40,6 +43,22 @@ const state = {
     expenses: store.get('expenses', SEED.expenses),
     sessions: store.get('sessions', SEED.sessions)
 };
+
+// Versões antigas guardavam a água e as refeições do dia em chaves separadas
+function legacyDailyLog() {
+    return { [CLIENT]: { [today]: { water: store.get('water_' + today, 0), meals: store.get('meals_' + today, []) } } };
+}
+
+const dietOf = name => state.diets[name] || null;
+// Registro de um dia do aluno (cria vazio se ainda não existir)
+function logOf(name, date = today) {
+    const byDate = state.dailyLogs[name] || (state.dailyLogs[name] = {});
+    return byDate[date] || (byDate[date] = { water: 0, meals: [] });
+}
+const myLog = () => logOf(CLIENT);
+const waterGoal = () => (dietOf(CLIENT) || {}).water || 3000;
+// Litros com até 2 casas (750 ml → "0,75")
+const liters = ml => (ml / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
 
 function seedWorkoutDays() {
     // Treinos da semana atual até ontem (exemplo)
@@ -57,7 +76,8 @@ function save() {
     store.set('workoutDays', state.workoutDays);
     store.set('progress', state.progress);
     store.set('chat', state.chat);
-    store.set('water_' + today, state.water);
+    store.set('diets', state.diets);
+    store.set('dailyLogs', state.dailyLogs);
     store.set('profile', state.profile);
     store.set('plans', state.plans);
     store.set('videos', state.videos);
@@ -280,47 +300,73 @@ const clientPages = {
 
     dieta: {
         title: () => 'Plano alimentar',
-        sub: () => 'Refeições e metas de macronutrientes do dia',
+        sub: () => 'Refeições e metas do dia, montadas pelo coach',
         render() {
-            const m = SEED.macros;
-            const eaten = store.get('meals_' + today, []);
-            const kcal = SEED.meals.reduce((t, x, i) => t + (eaten.includes(i) ? x.kcal : 0), 0);
-            const ratio = kcal / m.kcal;
-            const macro = (label, total, unit, color) => `<div class="macro">
+            const d = dietOf(CLIENT);
+            const log = myLog();
+            const goal = waterGoal();
+            const waterCard = `
+                <div class="card-head" style="margin-top:22px"><h3>💧 Água hoje</h3><b>${liters(log.water)} de ${liters(goal)} L</b></div>
+                <div class="progress"><span style="width:${Math.min(100, log.water / goal * 100)}%;background:var(--blue)"></span></div>
+                <div style="display:flex;gap:6px;margin-top:10px">
+                    <button class="btn btn-sm" data-water="250">+250 ml</button>
+                    <button class="btn btn-sm" data-water="500">+500 ml</button>
+                    <button class="btn btn-sm btn-ghost" data-water="-250" title="Desfazer 250 ml">−</button>
+                </div>`;
+            if (!d || !d.meals.length) return `
+                <div class="grid grid-main">
+                    <div class="card empty">🥗 Seu coach ainda está montando seu plano alimentar.<br>
+                        <a href="#/cliente/mensagens" style="color:var(--accent)">Falar com o coach →</a></div>
+                    <div class="card">${waterCard}</div>
+                </div>`;
+            const done = log.meals.filter(i => i < d.meals.length);
+            const kcalDone = d.meals.reduce((t, x, i) => t + (done.includes(i) ? (+x.kcal || 0) : 0), 0);
+            const kcalGoal = +d.kcal || d.meals.reduce((t, x) => t + (+x.kcal || 0), 0);
+            const ratio = kcalGoal ? Math.min(1, kcalDone / kcalGoal) : 0;
+            const macro = (label, total, unit, color) => total ? `<div class="macro">
                 <div class="macro-top"><span>${label}</span><b>${Math.round(total * ratio)} / ${total} ${unit}</b></div>
-                <div class="progress"><span style="width:${ratio * 100}%;background:${color}"></span></div></div>`;
+                <div class="progress"><span style="width:${ratio * 100}%;background:${color}"></span></div></div>` : '';
             return `
             <div class="grid grid-main">
                 <div class="card">
-                    <div class="card-head"><h2>Refeições de hoje</h2><span class="muted small">Toque para marcar como feita</span></div>
-                    ${SEED.meals.map((x, i) => `
-                        <div class="meal" data-meal="${i}" style="cursor:pointer;${eaten.includes(i) ? 'border-color:var(--accent)' : ''}">
+                    <div class="card-head"><h2>Refeições de hoje</h2><span class="muted small">${done.length} de ${d.meals.length} feitas • toque para marcar</span></div>
+                    ${d.meals.map((x, i) => `
+                        <div class="meal ${done.includes(i) ? 'meal-done' : ''}" data-meal="${i}" role="button" tabindex="0" aria-pressed="${done.includes(i)}">
                             <div class="meal-head">
-                                <div><b>${x.name}</b> <span class="muted small">• ${x.time}</span></div>
-                                <span class="badge ${eaten.includes(i) ? 'accent' : ''}">${eaten.includes(i) ? '✓ Feita' : x.kcal + ' kcal'}</span>
+                                <div><b>${esc(x.name)}</b>${x.time ? ` <span class="muted small">• ${esc(x.time)}</span>` : ''}</div>
+                                <span class="badge ${done.includes(i) ? 'accent' : ''}">${done.includes(i) ? '✓ Feita' : x.kcal ? x.kcal + ' kcal' : 'Marcar'}</span>
                             </div>
-                            <ul>${x.items.map(it => `<li>• ${esc(it)}</li>`).join('')}</ul>
+                            <ul>${(x.items || []).map(it => `<li>• ${esc(it)}</li>`).join('')}</ul>
                         </div>`).join('')}
+                    ${d.notes ? `<div class="eval-feedback" style="margin-top:14px"><b>📝 Orientações do coach</b><p>${esc(d.notes)}</p></div>` : ''}
                 </div>
                 <div class="card">
-                    <div class="card-head"><h2>Resumo</h2></div>
-                    <div class="ring-wrap" style="margin-bottom:20px">
-                        ${ring(ratio, kcal)}
-                        <div><div class="muted small">de</div><b style="font-size:22px">${m.kcal} kcal</b></div>
-                    </div>
-                    ${macro('Proteínas', m.protein, 'g', 'var(--accent)')}
-                    ${macro('Carboidratos', m.carbs, 'g', 'var(--blue)')}
-                    ${macro('Gorduras', m.fat, 'g', 'var(--orange)')}
-                    <p class="muted small" style="margin-top:12px">💡 Beba pelo menos 3 L de água e evite pular refeições.</p>
+                    <div class="card-head"><h2>Resumo do dia</h2></div>
+                    ${kcalGoal ? `<div class="ring-wrap" style="margin-bottom:20px">
+                        ${ring(ratio, kcalDone)}
+                        <div><div class="muted small">de</div><b style="font-size:22px">${kcalGoal} kcal</b></div>
+                    </div>` : ''}
+                    ${macro('Proteínas', +d.protein, 'g', 'var(--accent)')}
+                    ${macro('Carboidratos', +d.carbs, 'g', 'var(--blue)')}
+                    ${macro('Gorduras', +d.fat, 'g', 'var(--orange)')}
+                    ${waterCard}
                 </div>
             </div>`;
         },
         bind(view) {
-            view.querySelectorAll('[data-meal]').forEach(el => el.onclick = () => {
-                const i = Number(el.dataset.meal);
-                const eaten = store.get('meals_' + today, []);
-                store.set('meals_' + today, eaten.includes(i) ? eaten.filter(x => x !== i) : [...eaten, i]);
-                route();
+            const toggle = el => {
+                const i = Number(el.dataset.meal), log = myLog();
+                log.meals = log.meals.includes(i) ? log.meals.filter(x => x !== i) : [...log.meals, i].sort((a, b) => a - b);
+                save(); route();
+            };
+            view.querySelectorAll('[data-meal]').forEach(el => {
+                el.onclick = () => toggle(el);
+                el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(el); } };
+            });
+            view.querySelectorAll('[data-water]').forEach(b => b.onclick = () => {
+                const log = myLog();
+                log.water = Math.max(0, log.water + Number(b.dataset.water));
+                save(); route();
             });
         }
     },
@@ -573,7 +619,7 @@ const NAV = {
         ['pagamentos', '💳', 'Pagamentos'], ['mensagens', '💬', 'Mensagens'], ['perfil', '👤', 'Perfil']
     ],
     personal: [
-        ['dashboard', '🏠', 'Dashboard'], ['alunos', '👥', 'Alunos'], ['fichas', '📋', 'Fichas de treino'],
+        ['dashboard', '🏠', 'Dashboard'], ['alunos', '👥', 'Alunos'], ['fichas', '📋', 'Fichas de treino'], ['dietas', '🥗', 'Dietas'],
         ['biblioteca', '🎬', 'Exercícios'], ['avaliacoes', '📸', 'Avaliações'], ['financeiro', '💰', 'Financeiro'],
         ['agenda', '📅', 'Agenda'], ['mensagens', '💬', 'Mensagens']
     ]

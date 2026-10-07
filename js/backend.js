@@ -184,7 +184,7 @@ const Backend = (() => {
         const students = api.people.filter(p => p.role === 'aluno');
 
         const since = offsetDate(-60);
-        const [plans, logs, days, progress, assessments, sessions, invoices, videos, expenses] = await Promise.all([
+        const [plans, logs, days, progress, assessments, sessions, invoices, videos, expenses, diets, dailyLogs] = await Promise.all([
             sb.from('workout_plans').select('*').order('position'),
             sb.from('workout_logs').select('*').gte('date', since),
             sb.from('workout_days').select('*').gte('date', since),
@@ -194,7 +194,9 @@ const Backend = (() => {
             sb.from('invoices').select('*'),
             sb.from('exercise_videos').select('*'),
             // Despesas: só o coach enxerga (para o aluno volta vazio)
-            sb.from('expenses').select('*')
+            sb.from('expenses').select('*'),
+            sb.from('diet_plans').select('*'),
+            sb.from('daily_logs').select('*').gte('date', since)
         ].map(p => p.then(check)));
 
         // Quem está logado vira o "aluno" da área do aluno
@@ -206,6 +208,17 @@ const Backend = (() => {
             (state.plans[nameOf(r.student_id)] ||= []).push({
                 id: r.id, name: r.name, focus: r.focus, day: r.day, duration: r.duration, notes: r.notes, exercises: r.exercises
             });
+        });
+        // Dieta de cada aluno e o que foi marcado no dia (água e refeições)
+        const orEmpty = v => v === null || v === undefined ? '' : Number(v);
+        state.diets = {};
+        diets.forEach(r => {
+            state.diets[nameOf(r.student_id)] = { kcal: orEmpty(r.kcal), protein: orEmpty(r.protein), carbs: orEmpty(r.carbs), fat: orEmpty(r.fat),
+                water: r.water_ml, notes: r.notes || '', meals: r.meals || [] };
+        });
+        state.dailyLogs = {};
+        dailyLogs.forEach(r => {
+            (state.dailyLogs[nameOf(r.student_id)] ||= {})[r.date] = { water: r.water_ml, meals: r.meals_done || [] };
         });
         state.doneExercises = {};
         logs.filter(r => r.student_id === me.id).forEach(r => { state.doneExercises[`${r.plan_id}|${r.date}`] = r.done; });
@@ -302,6 +315,20 @@ const Backend = (() => {
         workout_days: {
             pk: ['student_id', 'date'], canWrite: () => !isCoach(),
             rows: () => state.workoutDays.map(date => ({ student_id: api.profile.id, date }))
+        },
+        diet_plans: {
+            pk: ['student_id'], canWrite: isCoach,
+            rows: () => Object.entries(state.diets).map(([name, d]) => {
+                const n = v => v === '' || v === null || v === undefined || isNaN(+v) ? null : Math.round(+v);
+                return { student_id: idOf(name), kcal: n(d.kcal), protein: n(d.protein), carbs: n(d.carbs), fat: n(d.fat),
+                    water_ml: n(d.water) ?? 3000, notes: d.notes || '', meals: d.meals || [] };
+            })
+        },
+        daily_logs: {
+            pk: ['student_id', 'date'], canWrite: () => !isCoach(),
+            rows: () => Object.entries(state.dailyLogs[CLIENT] || {})
+                .filter(([, l]) => l.water || l.meals.length)
+                .map(([date, l]) => ({ student_id: api.profile.id, date, water_ml: l.water, meals_done: l.meals }))
         },
         progress_entries: {
             pk: ['student_id', 'date'], canWrite: () => !isCoach(),

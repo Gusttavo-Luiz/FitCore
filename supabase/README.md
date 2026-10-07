@@ -16,7 +16,7 @@ O site funciona em dois modos:
 2. **Criar as tabelas e as regras de segurança**
    - No projeto, abra **SQL Editor → New query**.
    - Cole o conteúdo inteiro de [`migrations/0001_schema.sql`](migrations/0001_schema.sql) e clique em **Run**.
-   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) , [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real) , [`migrations/0004_default_videos.sql`](migrations/0004_default_videos.sql) (vídeos que já vêm cadastrados, como o do Burpee) , [`migrations/0005_expenses.sql`](migrations/0005_expenses.sql) (despesas do Financeiro) e [`migrations/0006_assessment_review.sql`](migrations/0006_assessment_review.sql) (aluno envia fotos, coach avalia).
+   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) , [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real) , [`migrations/0004_default_videos.sql`](migrations/0004_default_videos.sql) (vídeos que já vêm cadastrados, como o do Burpee) , [`migrations/0005_expenses.sql`](migrations/0005_expenses.sql) (despesas do Financeiro), [`migrations/0006_assessment_review.sql`](migrations/0006_assessment_review.sql) (aluno envia fotos, coach avalia) e [`migrations/0007_diet.sql`](migrations/0007_diet.sql) (dieta de cada aluno e registro diário de água e refeições).
    - Pode rodar de novo sem problema: os arquivos não apagam nada.
 
 3. **Configurar o login**
@@ -66,6 +66,8 @@ O site funciona em dois modos:
 | `exercise_videos` | Link do vídeo de cada exercício | Todos os logados | Coach |
 | `student_invites` | Alunos cadastrados pelo coach (nome, e-mail, plano, objetivo) | Coach | Coach |
 | `expenses` | Despesas do coach (descrição, categoria, valor, data) | Coach | Coach |
+| `diet_plans` | Plano alimentar de cada aluno: metas (kcal, proteínas, carboidratos, gorduras, água) e refeições | Aluno dono; coach | Coach |
+| `daily_logs` | Água bebida e refeições marcadas por dia | Aluno dono; coach | Aluno dono; coach |
 | `messages` | Chat: conversa de cada aluno com o coach, com confirmação de leitura | Aluno dono; coach | Quem participa da conversa, só em nome próprio. Ninguém edita nem apaga; só marca como lida |
 | Storage `assessment-photos` | Fotos das avaliações, em `<id do aluno>/...` | Aluno dono; coach | Aluno dono; coach |
 
@@ -73,7 +75,7 @@ A função `busy_slots(de, até)` devolve só data, hora e duração das sessõe
 
 ## Testes
 
-As regras de acesso têm 66 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
+As regras de acesso têm 76 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
 
 ```bash
 createdb teste
@@ -84,6 +86,7 @@ psql -d teste -f supabase/migrations/0003_messages.sql
 psql -d teste -f supabase/migrations/0004_default_videos.sql
 psql -d teste -f supabase/migrations/0005_expenses.sql
 psql -d teste -f supabase/migrations/0006_assessment_review.sql
+psql -d teste -f supabase/migrations/0007_diet.sql
 psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PASSARAM"
 ```
 
@@ -91,5 +94,4 @@ psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PA
 
 ## Ainda não passa pelo banco
 
-- **Dieta e água:** continuam salvas só no aparelho do aluno.
 - **Pagamento:** o botão "Pagar" leva ao checkout da Prime Coaching. O coach marca como pago no Financeiro.

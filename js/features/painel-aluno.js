@@ -2,7 +2,6 @@
 // Indicadores clicáveis, "Para fazer hoje", treino do dia, evolução com filtro
 // (peso, gordura ou cintura; 3 meses ou tudo) e linha da meta, semana planejada
 // x feita, próximas sessões e o último comentário do coach.
-const WATER_GOAL = 3000;   // ml por dia
 const WEEK_GOAL = 5;       // treinos por semana
 let evoMetric = 'weight';
 let evoRange = store.get('evo_range', 'all');
@@ -99,8 +98,8 @@ function clientTodo() {
         const n = (state.doneExercises[doneKey(w.id)] || []).length;
         items.push([done, '🏋️', done ? `Treino ${esc(w.name.replace(/^Treino\s*/, ''))} concluído` : `Fazer o ${esc(w.name)}${n ? ` (${n}/${w.exercises.length} feitos)` : ''}`, `#/cliente/treinos/${w.id}`]);
     }
-    const water = state.water;
-    items.push([water >= WATER_GOAL, '💧', water >= WATER_GOAL ? 'Meta de água batida' : `Beber água: ${num(water / 1000)} de ${num(WATER_GOAL / 1000)} L`, null, 'water']);
+    const water = myLog().water, WATER_GOAL = waterGoal();
+    items.push([water >= WATER_GOAL, '💧', water >= WATER_GOAL ? 'Meta de água batida' : `Beber água: ${liters(water)} de ${liters(WATER_GOAL)} L`, null, 'water']);
     const sessionToday = upcomingSessions(10).find(s => s.date === today);
     if (sessionToday) items.push([false, '📅', `${esc(sessionToday.title)} hoje às ${sessionToday.time}`, `#/cliente/agenda/${sessionToday.date}/${sessionToday.id}`]);
     const unpaid = invoicesOf(CLIENT).filter(i => !i.paidAt).sort((a, b) => a.due.localeCompare(b.due))[0];
@@ -172,8 +171,8 @@ clientPages.dashboard = {
                 <div class="delta muted">${plural(last30, 'treino', 'treinos')} nos últimos 30 dias</div></a>
             <div class="card stat">
                 <div class="label">Água hoje <span class="stat-ico">💧</span></div>
-                <div class="value">${num(state.water / 1000)} <small>de ${num(WATER_GOAL / 1000)} L</small></div>
-                <div class="progress" style="margin:6px 0 8px"><span style="width:${Math.min(100, state.water / WATER_GOAL * 100)}%"></span></div>
+                <div class="value">${liters(myLog().water)} <small>de ${liters(waterGoal())} L</small></div>
+                <div class="progress" style="margin:6px 0 8px"><span style="width:${Math.min(100, myLog().water / waterGoal() * 100)}%"></span></div>
                 <div style="display:flex;gap:6px">
                     <button class="btn btn-sm" data-water="250">+250 ml</button>
                     <button class="btn btn-sm" data-water="500">+500 ml</button>
@@ -236,7 +235,7 @@ clientPages.dashboard = {
     },
     bind(view) {
         view.querySelectorAll('[data-water]').forEach(b => b.onclick = () => {
-            state.water = Math.max(0, state.water + Number(b.dataset.water));
+            myLog().water = Math.max(0, myLog().water + Number(b.dataset.water));
             save(); route();
         });
         const bindEvo = () => {

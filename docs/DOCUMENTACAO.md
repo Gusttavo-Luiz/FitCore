@@ -53,6 +53,7 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `js/backend.js` | 309 | Ligação com o Supabase: login, carregamento e sincronização dos dados |
 | `js/features/biblioteca.js` | 116 | Biblioteca de exercícios com vídeos |
 | `js/features/fichas.js` | 146 | Fichas de treino por aluno (coach) |
+| `js/features/dietas.js` | — | Dieta de cada aluno (coach): metas, refeições, orientações e o que o aluno marcou nos últimos 7 dias |
 | `js/features/avaliacao.js` | 374 | Avaliação física: o aluno envia as fotos, o coach avalia e comenta |
 | `js/features/pagamentos.js` | — | Pagamentos do aluno |
 | `js/features/financeiro.js` | — | Financeiro do coach: indicadores, gráfico, cobranças e despesas |
@@ -67,6 +68,7 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `supabase/migrations/0004_default_videos.sql` | — | Vídeos de execução que já vêm cadastrados (Burpee) |
 | `supabase/migrations/0005_expenses.sql` | — | Despesas do coach (Financeiro) |
 | `supabase/migrations/0006_assessment_review.sql` | — | Envio de fotos pelo aluno e avaliação pelo coach (status, comentário, medidas opcionais) |
+| `supabase/migrations/0007_diet.sql` | — | Dieta de cada aluno (`diet_plans`) e registro diário de água e refeições (`daily_logs`) |
 | `js/features/chat.js` | — | Telas do chat com o Supabase (lista de conversas, tempo real, não lidas) |
 | `js/features/painel-aluno.js` | — | Dashboard do aluno: "Para fazer hoje", evolução com filtros e meta, semana planejada x feita |
 | `js/features/painel.js` | — | Dashboard do coach: indicadores clicáveis, "Para fazer agora", recebido por mês com filtro de período, sessões e alunos com filtros |
@@ -132,7 +134,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Dashboard | `dashboard` | Indicadores clicáveis (peso, % da meta, treinos na semana e nos últimos 30 dias, água com +250/+500 ml). **Para fazer hoje**: treino do dia, água, sessão de hoje, mensalidade perto de vencer ou atrasada, mensagens novas e lembrete de mandar fotos (a cada 28 dias). Treino de hoje (ou o próximo, no dia de descanso). **Sua evolução** com peso, gordura ou cintura, últimos 3 meses ou desde o início, linha da meta, início, atual e variação. Semana com treinos feitos, planejados (letra do treino) e não feitos. Próximas sessões e último comentário do coach |
 | Treinos | `treinos/<ficha>` | Fichas A, B, C…; marcar exercícios, finalizar treino, cronômetro de descanso |
 | Exercícios | `biblioteca/<exercício>` | 35 exercícios com busca, filtro por grupo, dicas e vídeo |
-| Dieta | `dieta` | 6 refeições marcáveis e resumo de calorias e macros |
+| Dieta | `dieta` | Plano montado pelo coach: refeições marcáveis, resumo de calorias e macros, orientações do coach e água do dia (meta definida pelo coach). Sem plano, avisa que o coach está montando |
 | Evolução | `evolucao` | Gráficos de peso e gordura, nova medição, histórico com IMC |
 | Avaliação física | `avaliacao` | **Enviar fotos para o coach** (frente, lado e costas; peso e recado opcionais) ou registrar medidas. Cada envio fica "Aguardando o coach" até ser avaliado; o comentário do coach aparece no topo e no histórico. Comparação antes e depois |
 | Agenda | `agenda/<data>/<sessão>` | Calendário, solicitar horário, remarcar, cancelar, adicionar ao Google Agenda |
@@ -147,6 +149,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Dashboard | `dashboard` | Indicadores clicáveis (alunos ativos, recebido no mês e quanto falta receber, aderência média, quem precisa de atenção). **Para fazer agora**: fotos para avaliar, pedidos de horário, cobranças atrasadas e mensagens não lidas, cada um com atalho. **Próximas sessões** (hoje ou 7 dias). **Recebido por mês** com filtro de 3, 6 ou 12 meses, valores nas barras, linha de média, total, média e melhor mês, e versão em tabela. **Alunos** com busca, plano, ordenação e filtros (precisam de atenção, pagamento atrasado, aderência abaixo de 60%), mostrando o motivo de cada alerta e um atalho para o chat |
 | Alunos | `alunos` | Lista com busca e filtro; cadastro de aluno; botão Editar para mudar plano, objetivo e status |
 | Fichas de treino | `fichas/<ficha>` | Criar, editar, reordenar, duplicar, excluir e copiar fichas de cada aluno |
+| Dietas | `dietas` | Plano alimentar de cada aluno: metas do dia (kcal, macros, água), refeições com horário, calorias e alimentos (adicionar, reordenar, remover), orientações; começar do modelo, em branco ou copiar de outro aluno. Mostra o que o aluno marcou nos últimos 7 dias |
 | Exercícios | `biblioteca/<exercício>` | Igual ao aluno, mais o campo para colar o link do vídeo (YouTube, Vimeo ou .mp4) |
 | Avaliações | `avaliacoes` | Fila **Fotos aguardando avaliação** com os envios de todos os alunos (contador no menu). Em **Avaliar**, o coach compara as fotos novas com as últimas avaliadas, preenche medidas se quiser e escreve o comentário, que também pode ir para o chat do aluno. Histórico e comparação de qualquer aluno |
 | Financeiro | `financeiro` | 6 indicadores (recebido, a receber, em atraso com inadimplência, despesas, lucro, receita recorrente), gráfico receitas x despesas, cobranças (receber com forma de pagamento, cobrar no WhatsApp, recibo, editar, excluir, busca, filtro por mês, exportar CSV), mensalidades em lote, cobrança avulsa com cupom e despesas por categoria |
@@ -241,7 +244,9 @@ O backend usa o Supabase: banco PostgreSQL, login por e-mail e senha e armazenam
 | Dashboard do aluno | Meta de exemplo (78 kg) | Peso-meta definido pelo aluno no Perfil |
 | Mensagens | Lista de alunos com conversa particular; mensagens salvas no navegador e respostas automáticas | Chat real em tempo real: o coach tem uma lista de conversas (uma por aluno, com busca e não lidas); as duas pontas veem quando a mensagem foi lida |
 
-**Testes:** 66 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 46 verificações (mais 16 do chat, com duas abas conversando em tempo real): cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino, pagamento e envio de fotos com avaliação do coach.
+**Testes:** 76 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 46 verificações (mais 16 do chat, com duas abas conversando em tempo real): cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino, pagamento e envio de fotos com avaliação do coach. Um teste separado, com 9 verificações, cobre a dieta: o coach monta, a aluna marca refeições e água, e o coach acompanha.
+
+**Dieta no banco:** a migração `0007` cria `diet_plans` (o coach monta, o aluno só lê) e `daily_logs` (o aluno registra água e refeições do dia; o coach lê). As refeições feitas são guardadas pela posição no plano.
 
 **Avaliação por fotos no banco:** a migração `0006` deixa as medidas opcionais e cria `status` (`enviada` ou `avaliada`), `feedback`, `reviewed_at` e `submitted_by`. Um gatilho garante que tudo que o aluno grava nasce como `enviada` e que só o coach muda status e comentário.
 
@@ -254,7 +259,8 @@ No **modo demonstração**, os dados ficam no `localStorage` do navegador de que
 | `user` | Nome, e-mail e perfil (aluno ou coach) do login |
 | `plans` | Fichas de treino de cada aluno |
 | `done`, `workoutDays` | Exercícios marcados no dia e dias com treino finalizado |
-| `meals_<data>`, `water_<data>` | Refeições feitas e água bebida em cada dia |
+| `diets` | Plano alimentar de cada aluno (metas, refeições, orientações) |
+| `dailyLogs` | Água bebida e refeições feitas por aluno e por dia (substitui as antigas chaves `meals_<data>` e `water_<data>`, que são aproveitadas na primeira visita) |
 | `progress` | Medições de peso, gordura e cintura (gráficos de evolução) |
 | `assessments` | Avaliações físicas, com as fotos em texto (base64) |
 | `videos` | Link do vídeo de cada exercício da biblioteca |
@@ -314,6 +320,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
+| 28 | `PENDING` | Dieta no banco: o coach monta o plano alimentar de cada aluno (nova tela Dietas) e o aluno registra água e refeições do dia; migração 0007 com regras de acesso e testes |
 | 27 | `f0fe99c` | Página inicial ampliada: "É pra você se…", prévia do app, "Como funciona" em 4 passos, destaques e Instagram no Sobre, dúvidas frequentes, chamada final, menu no celular e animação ao rolar |
 | 26 | `43d359b` | Dashboard do aluno redesenhado: "Para fazer hoje", indicadores clicáveis com meta, gráfico de evolução com filtros (peso, gordura, cintura; 3 meses ou tudo) e linha da meta, semana planejada x feita e comentário do coach |
 | 25 | `86415bb` | Dashboard do coach redesenhado: indicadores clicáveis, "Para fazer agora", gráfico de recebido com filtro de período e valores, sessões de hoje/7 dias e lista de alunos com busca, filtros e motivo dos alertas |
@@ -351,7 +358,6 @@ O backend está pronto, mas ainda desligado: enquanto as chaves do Supabase não
 **Limitações atuais**
 
 - Modo demonstração (enquanto o Supabase não for ligado): login sem senha real e dados só no navegador.
-- Dieta e água ainda não passam pelo banco.
 - O envio padrão de e-mails do Supabase é limitado; para uso real, configurar um SMTP.
 - Pagamentos simulados: nenhum valor é cobrado.
 - Chat com respostas automáticas de demonstração.
@@ -371,7 +377,7 @@ O backend está pronto, mas ainda desligado: enquanto as chaves do Supabase não
 
 **Próximos passos técnicos sugeridos**
 
-1. Ligar o Supabase e levar dieta e água para o banco.
+1. Ligar o Supabase (criar o projeto e colar a URL e a chave *anon* em `js/config.js`).
 2. Pagamento real pela Prime Coaching ou por outro provedor (Mercado Pago, Stripe).
 3. Notificações por WhatsApp ou e-mail quando uma sessão for solicitada ou confirmada.
 4. Domínio próprio (ex.: sidneimuller.com.br) apontando para o GitHub Pages.
