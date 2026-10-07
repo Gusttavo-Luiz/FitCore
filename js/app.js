@@ -77,6 +77,7 @@ function save() {
     store.set('progress', state.progress);
     store.set('chat', state.chat);
     store.set('diets', state.diets);
+    store.set('planPrices', SEED.planPrices);
     store.set('dailyLogs', state.dailyLogs);
     store.set('profile', state.profile);
     store.set('plans', state.plans);
@@ -470,8 +471,10 @@ const clientPages = {
     }
 };
 
+// Plano do aluno logado: do perfil no Supabase; na demonstração, do cadastro do aluno
 function myPlanName() {
-    return (Backend.enabled && Backend.profile && Backend.profile.plan) || 'Performance';
+    return (Backend.enabled && Backend.profile && Backend.profile.plan)
+        || (SEED.students.find(s => s.name === CLIENT) || {}).plan || 'Performance';
 }
 
 // ---------- Páginas do personal ----------
@@ -653,6 +656,8 @@ const trainerPages = {
 };
 
 SEED.students = store.get('students', SEED.students);
+// Planos e preços (o coach edita em Financeiro → Planos)
+SEED.planPrices = store.get('planPrices', SEED.planPrices);
 
 // ---------- Navegação ----------
 const NAV = {

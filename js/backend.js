@@ -188,7 +188,7 @@ const Backend = (() => {
         const students = api.people.filter(p => p.role === 'aluno');
 
         const since = offsetDate(-60);
-        const [plans, logs, days, progress, assessments, sessions, invoices, videos, expenses, diets, dailyLogs] = await Promise.all([
+        const [plans, logs, days, progress, assessments, sessions, invoices, videos, expenses, diets, dailyLogs, planPrices] = await Promise.all([
             sb.from('workout_plans').select('*').order('position'),
             sb.from('workout_logs').select('*').gte('date', since),
             sb.from('workout_days').select('*').gte('date', since),
@@ -200,8 +200,11 @@ const Backend = (() => {
             // Despesas: só o coach enxerga (para o aluno volta vazio)
             sb.from('expenses').select('*'),
             sb.from('diet_plans').select('*'),
-            sb.from('daily_logs').select('*').gte('date', since)
+            sb.from('daily_logs').select('*').gte('date', since),
+            sb.from('plans').select('*').order('position')
         ].map(p => p.then(check)));
+        // Planos e preços do banco (sem nenhum cadastrado, ficam os padrões)
+        if (planPrices.length) SEED.planPrices = Object.fromEntries(planPrices.map(r => [r.name, Number(r.price)]));
 
         // Quem está logado vira o "aluno" da área do aluno
         if (!isCoach()) CLIENT = me.full_name || me.email;
@@ -320,6 +323,10 @@ const Backend = (() => {
         workout_days: {
             pk: ['student_id', 'date'], canWrite: () => !isCoach(),
             rows: () => state.workoutDays.map(date => ({ student_id: api.profile.id, date }))
+        },
+        plans: {
+            pk: ['name'], canWrite: isCoach,
+            rows: () => Object.entries(SEED.planPrices).map(([name, price], i) => ({ name, price, position: i }))
         },
         diet_plans: {
             pk: ['student_id'], canWrite: isCoach,

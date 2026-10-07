@@ -16,7 +16,7 @@ O site funciona em dois modos:
 2. **Criar as tabelas e as regras de segurança**
    - No projeto, abra **SQL Editor → New query**.
    - Cole o conteúdo inteiro de [`migrations/0001_schema.sql`](migrations/0001_schema.sql) e clique em **Run**.
-   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) , [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real) , [`migrations/0004_default_videos.sql`](migrations/0004_default_videos.sql) (vídeos que já vêm cadastrados, como o do Burpee) , [`migrations/0005_expenses.sql`](migrations/0005_expenses.sql) (despesas do Financeiro), [`migrations/0006_assessment_review.sql`](migrations/0006_assessment_review.sql) (aluno envia fotos, coach avalia), [`migrations/0007_diet.sql`](migrations/0007_diet.sql) (dieta de cada aluno e registro diário de água e refeições) e [`migrations/0008_due_day.sql`](migrations/0008_due_day.sql) (vencimento definido pelo coach no cadastro).
+   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) , [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real) , [`migrations/0004_default_videos.sql`](migrations/0004_default_videos.sql) (vídeos que já vêm cadastrados, como o do Burpee) , [`migrations/0005_expenses.sql`](migrations/0005_expenses.sql) (despesas do Financeiro), [`migrations/0006_assessment_review.sql`](migrations/0006_assessment_review.sql) (aluno envia fotos, coach avalia), [`migrations/0007_diet.sql`](migrations/0007_diet.sql) (dieta de cada aluno e registro diário de água e refeições), [`migrations/0008_due_day.sql`](migrations/0008_due_day.sql) (vencimento definido pelo coach no cadastro) e [`migrations/0009_plans_billing.sql`](migrations/0009_plans_billing.sql) (planos com preço e mensalidades automáticas).
    - Pode rodar de novo sem problema: os arquivos não apagam nada.
 
 3. **Configurar o login**
@@ -42,7 +42,13 @@ O site funciona em dois modos:
      update public.profiles set role = 'coach' where email = 'email-do-sidnei@exemplo.com';
      ```
 
-6. **Publicar**: envie para a `main`.
+6. **Mensalidades automáticas (opcional, recomendado)**
+   - Em **Database → Extensions**, ative a extensão **pg_cron**.
+   - Rode de novo [`migrations/0009_plans_billing.sql`](migrations/0009_plans_billing.sql). Ela agenda a geração das mensalidades para todo dia 1º, às 9h (Brasília).
+   - Para conferir, rode no SQL Editor: `select jobname, schedule from cron.job;` (deve aparecer `mensalidades-do-mes`).
+   - Sem o pg_cron, nada quebra: o coach gera as mensalidades em **Financeiro → Cobranças → Mensalidades em lote**.
+
+7. **Publicar**: envie para a `main`.
 
 ## Como os alunos entram
 
@@ -64,6 +70,7 @@ O site funciona em dois modos:
 | `sessions` | Agenda | Aluno dono; coach | Aluno: só pede (pendente), remarca ou cancela. Coach: tudo |
 | `invoices` | Cobranças | Aluno dono; coach | Coach |
 | `exercise_videos` | Link do vídeo de cada exercício | Todos os logados | Coach |
+| `plans` | Nome e preço de cada plano | Todos os logados | Coach |
 | `student_invites` | Alunos cadastrados pelo coach (nome, e-mail, plano, objetivo, 1º vencimento e valor) | Coach | Coach |
 | `expenses` | Despesas do coach (descrição, categoria, valor, data) | Coach | Coach |
 | `diet_plans` | Plano alimentar de cada aluno: metas (kcal, proteínas, carboidratos, gorduras, água) e refeições | Aluno dono; coach | Coach |
@@ -75,7 +82,7 @@ A função `busy_slots(de, até)` devolve só data, hora e duração das sessõe
 
 ## Testes
 
-As regras de acesso têm 82 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
+As regras de acesso têm 92 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
 
 ```bash
 createdb teste
@@ -88,6 +95,7 @@ psql -d teste -f supabase/migrations/0005_expenses.sql
 psql -d teste -f supabase/migrations/0006_assessment_review.sql
 psql -d teste -f supabase/migrations/0007_diet.sql
 psql -d teste -f supabase/migrations/0008_due_day.sql
+psql -d teste -f supabase/migrations/0009_plans_billing.sql
 psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PASSARAM"
 ```
 

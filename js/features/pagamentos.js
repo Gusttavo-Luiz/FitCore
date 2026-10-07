@@ -58,7 +58,7 @@ clientPages.pagamentos = {
     render() {
         const list = invoicesOf(CLIENT);
         const open = list.filter(i => !i.paidAt).sort((a, b) => a.due.localeCompare(b.due));
-        const plan = list[0]?.plan || 'Performance';
+        const plan = myPlanName();
         return `
         <div class="grid grid-3">
             <div class="card stat"><div class="label">Plano atual <span class="stat-ico">⭐</span></div>

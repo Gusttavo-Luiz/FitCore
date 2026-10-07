@@ -69,6 +69,7 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `supabase/migrations/0005_expenses.sql` | — | Despesas do coach (Financeiro) |
 | `supabase/migrations/0006_assessment_review.sql` | — | Envio de fotos pelo aluno e avaliação pelo coach (status, comentário, medidas opcionais) |
 | `supabase/migrations/0007_diet.sql` | — | Dieta de cada aluno (`diet_plans`) e registro diário de água e refeições (`daily_logs`) |
+| `supabase/migrations/0009_plans_billing.sql` | — | Planos com preço no banco (`plans`), função que gera as mensalidades do mês e agendamento todo dia 1º (pg_cron) |
 | `supabase/migrations/0008_due_day.sql` | — | Dia de vencimento do aluno, definido pelo coach no cadastro; 1ª cobrança criada quando o aluno aceita o convite |
 | `js/features/chat.js` | — | Telas do chat com o Supabase (lista de conversas, tempo real, não lidas) |
 | `js/features/painel-aluno.js` | — | Dashboard do aluno: "Para fazer hoje", evolução com filtros e meta, semana planejada x feita |
@@ -153,7 +154,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Dietas | `dietas` | Plano alimentar de cada aluno: metas do dia (kcal, macros, água), refeições com horário, calorias e alimentos (adicionar, reordenar, remover), orientações; começar do modelo, em branco ou copiar de outro aluno. Mostra o que o aluno marcou nos últimos 7 dias |
 | Exercícios | `biblioteca/<exercício>` | Igual ao aluno, mais o campo para colar o link do vídeo (YouTube, Vimeo ou .mp4) |
 | Avaliações | `avaliacoes` | Fila **Fotos aguardando avaliação** com os envios de todos os alunos (contador no menu). Em **Avaliar**, o coach compara as fotos novas com as últimas avaliadas, preenche medidas se quiser e escreve o comentário, que também pode ir para o chat do aluno. Histórico e comparação de qualquer aluno |
-| Financeiro | `financeiro` | 6 indicadores (recebido, a receber, em atraso com inadimplência, despesas, lucro, receita recorrente), gráfico receitas x despesas, cobranças (receber com forma de pagamento, cobrar no WhatsApp, recibo, editar, excluir, busca, filtro por mês, exportar CSV), mensalidades em lote, cobrança avulsa com cupom e despesas por categoria |
+| Financeiro | `financeiro` | 6 indicadores (recebido, a receber, em atraso com inadimplência, despesas, lucro, receita recorrente), gráfico receitas x despesas, cobranças (receber com forma de pagamento, cobrar no WhatsApp, recibo, editar, excluir, busca, filtro por mês, exportar CSV), mensalidades em lote, cobrança avulsa com cupom, despesas por categoria e a aba Planos e preços (editar preço, criar e remover plano; mostra alunos e receita de cada plano) |
 | Agenda | `agenda/<data>/<sessão>` | Confirmar ou recusar solicitações, agendar, editar, filtrar por aluno |
 | Mensagens | `mensagens/<aluno>` | Lista de conversas (uma por aluno, com busca e não lidas) e chat em tempo real |
 
@@ -245,7 +246,9 @@ O backend usa o Supabase: banco PostgreSQL, login por e-mail e senha e armazenam
 | Dashboard do aluno | Meta de exemplo (78 kg) | Peso-meta definido pelo aluno no Perfil |
 | Mensagens | Lista de alunos com conversa particular; mensagens salvas no navegador e respostas automáticas | Chat real em tempo real: o coach tem uma lista de conversas (uma por aluno, com busca e não lidas); as duas pontas veem quando a mensagem foi lida |
 
-**Testes:** 82 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 49 verificações (mais 16 do chat, com duas abas conversando em tempo real): cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino, pagamento e envio de fotos com avaliação do coach. Um teste separado, com 9 verificações, cobre a dieta: o coach monta, a aluna marca refeições e água, e o coach acompanha.
+**Testes:** 92 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 49 verificações (mais 16 do chat, com duas abas conversando em tempo real): cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino, pagamento e envio de fotos com avaliação do coach. Um teste separado, com 9 verificações, cobre a dieta: o coach monta, a aluna marca refeições e água, e o coach acompanha. Outro, com 4 verificações, cobre planos e preços.
+
+**Planos e mensalidades automáticas:** a migração `0009` leva os planos e preços para o banco (o coach edita em Financeiro → Planos e preços) e cria a função `generate_monthly_invoices`, que gera a mensalidade do mês de cada aluno ativo com o preço do plano e o dia de vencimento dele, sem duplicar. Com a extensão pg_cron ativa no Supabase, ela roda sozinha todo dia 1º.
 
 **Dieta no banco:** a migração `0007` cria `diet_plans` (o coach monta, o aluno só lê) e `daily_logs` (o aluno registra água e refeições do dia; o coach lê). As refeições feitas são guardadas pela posição no plano.
 
@@ -321,6 +324,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
+| 30 | `PENDING` | Planos e preços no banco (nova aba Financeiro → Planos e preços: editar preço, criar e remover plano) e mensalidades geradas automaticamente todo dia 1º (migração 0009); Pagamentos do aluno mostra o plano do perfil |
 | 29 | `ac61eb6` | Vencimento definido pelo coach: campo "1º vencimento" no cadastro (cria a 1ª mensalidade), dia do vencimento editável em Editar (cobranças em aberto acompanham), mensalidades em lote usam esse dia; migração 0008 |
 | 28 | `d91d6f3` | Dieta no banco: o coach monta o plano alimentar de cada aluno (nova tela Dietas) e o aluno registra água e refeições do dia; migração 0007 com regras de acesso e testes |
 | 27 | `f0fe99c` | Página inicial ampliada: "É pra você se…", prévia do app, "Como funciona" em 4 passos, destaques e Instagram no Sobre, dúvidas frequentes, chamada final, menu no celular e animação ao rolar |

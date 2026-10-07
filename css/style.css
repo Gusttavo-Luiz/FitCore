@@ -603,6 +603,9 @@ tr:last-child td { border-bottom: 0; }
 .lg-exp { background: repeating-linear-gradient(45deg, var(--accent-2) 0 2px, var(--surface-2) 2px 5px); border: 1px solid var(--accent-2); }
 .fin-table { margin-top: 10px; }
 .fin-table summary { cursor: pointer; }
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+.price-input { display: flex; align-items: center; gap: 6px; max-width: 160px; }
+.price-input span { color: var(--muted); font-size: 13px; }
 
 /* ---------- Painel do coach ---------- */
 .stat-link { text-align: left; font: inherit; color: inherit; cursor: pointer; display: block; width: 100%; transition: border-color .15s, transform .15s; }

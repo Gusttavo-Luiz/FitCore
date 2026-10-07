@@ -188,6 +188,30 @@ update profiles set due_day = 5 where id = :'ana';
 select t_assert((select due_day from profiles where id = :'ana') = 5, 'coach muda o dia de vencimento');
 select t_denied(format($$update profiles set due_day = 32 where id = %L$$, :'ana'), 'dia de vencimento inválido é recusado');
 reset role;
+-- ===== Planos e mensalidades automáticas (0009) =====
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'ana', false);
+select t_assert((select count(*) from plans) = 3, 'aluna vê os planos e preços');
+select t_denied($$insert into plans (name, price) values ('Grátis', 1)$$, 'aluna não cria plano');
+update plans set price = 1 where name = 'Premium';
+select t_assert((select price from plans where name = 'Premium') = 299, 'aluna não muda preço (nenhuma linha muda)');
+select t_denied($$select generate_monthly_invoices()$$, 'aluna não gera mensalidades');
+select set_config('request.jwt.claim.sub', :'coach', false);
+update plans set price = 159 where name = 'Performance';
+insert into plans (name, price, position) values ('Online Light', 59, 3);
+select t_assert((select price from plans where name = 'Performance') = 159 and (select count(*) from plans) = 4, 'coach muda preço e cria plano');
+update profiles set status = 'Inativo' where id = :'bruno';
+select t_assert(generate_monthly_invoices((current_date + interval '2 months')::date) >= 1, 'coach gera as mensalidades do mês');
+select t_assert((select count(*) from invoices where student_id = :'bruno' and date_trunc('month', due) = date_trunc('month', current_date + interval '2 months')) = 0,
+                'aluno inativo não recebe mensalidade');
+select t_assert((select amount from invoices where student_id = :'ana' and date_trunc('month', due) = date_trunc('month', current_date + interval '2 months'))
+                    = (select price from plans where name = (select plan from profiles where id = :'ana'))
+                and (select extract(day from due) from invoices where student_id = :'ana' and date_trunc('month', due) = date_trunc('month', current_date + interval '2 months')) = 5,
+                'mensalidade usa o preço do plano e o dia de vencimento do aluno');
+select t_assert(generate_monthly_invoices((current_date + interval '2 months')::date) = 0, 'rodar de novo não duplica');
+reset role;
+select t_assert(generate_monthly_invoices((current_date + interval '3 months')::date) >= 1, 'agendamento (sem usuário) também gera');
+update profiles set status = 'Ativo' where id = :'bruno';
 -- ===== Despesas (0005) =====
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'coach', false);

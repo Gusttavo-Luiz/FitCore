@@ -268,6 +268,51 @@ function invoicesTab() {
     </div>`;
 }
 
+// ---------- Planos e preços ----------
+function plansTab() {
+    const plans = Object.entries(SEED.planPrices);
+    const using = name => SEED.students.filter(s => s.plan === name && s.status !== 'Inativo');
+    return `
+    <div class="grid grid-main">
+        <div class="card">
+            <div class="card-head"><h2>Planos e preços</h2><span class="badge">${plans.length}</span></div>
+            <form id="plans-form">
+                <div class="table-wrap"><table>
+                    <thead><tr><th>Plano</th><th>Preço por mês</th><th>Alunos ativos</th><th>Receita por mês</th><th></th></tr></thead>
+                    <tbody>${plans.map(([name, price]) => {
+                        const n = using(name).length;
+                        return `<tr>
+                            <td><b>${esc(name)}</b></td>
+                            <td><div class="price-input"><span>R$</span><input class="input" type="number" min="1" step="0.01" name="price" data-plan="${esc(name)}" value="${price}" required aria-label="Preço do plano ${esc(name)}"></div></td>
+                            <td>${n}</td><td>${money(price * n)}</td>
+                            <td><button type="button" class="btn btn-ghost btn-sm" data-del-plan="${esc(name)}" ${n || plans.length === 1 ? 'disabled' : ''}
+                                title="${n ? 'Há alunos neste plano: mude o plano deles antes de remover' : 'Remover plano'}">✕</button></td>
+                        </tr>`;
+                    }).join('')}</tbody>
+                </table></div>
+                <p class="muted small" style="margin-top:10px">O preço novo vale para as próximas cobranças. As que já foram geradas não mudam.</p>
+                <button class="btn btn-primary" type="submit" style="margin-top:12px">Salvar preços</button>
+            </form>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+            <div class="card">
+                <div class="card-head"><h2>Novo plano</h2></div>
+                <form id="plan-add">
+                    <label class="field">Nome<input class="input" name="name" maxlength="40" required placeholder="Ex.: Trimestral"></label>
+                    <label class="field">Preço por mês (R$)<input class="input" type="number" min="1" step="0.01" name="price" required></label>
+                    <button class="btn btn-block" type="submit" style="margin-top:6px">Adicionar plano</button>
+                </form>
+            </div>
+            <div class="card">
+                <div class="card-head"><h2>🔁 Mensalidades automáticas</h2></div>
+                <p class="muted small" style="margin:0">${Backend.enabled
+                    ? 'Todo dia 1º, o banco gera a mensalidade de cada aluno ativo, com o preço do plano e o dia de vencimento dele. Para isso, a extensão <b>pg_cron</b> precisa estar ativa no Supabase (veja o guia). Você também pode gerar na mão em Cobranças → Mensalidades em lote.'
+                    : 'Com o banco ligado, as mensalidades de cada aluno ativo são geradas sozinhas todo dia 1º, com o preço do plano e o dia de vencimento dele. Nesta demonstração, use Cobranças → Mensalidades em lote.'}</p>
+            </div>
+        </div>
+    </div>`;
+}
+
 // ---------- Despesas ----------
 function expensesTab() {
     const months = lastMonths(12).reverse();
@@ -342,13 +387,38 @@ trainerPages.financeiro = {
         <div class="tabs" style="margin-top:22px">
             <button class="tab ${finTab === 'cobrancas' ? 'active' : ''}" data-fintab="cobrancas">Cobranças</button>
             <button class="tab ${finTab === 'despesas' ? 'active' : ''}" data-fintab="despesas">Despesas</button>
+            <button class="tab ${finTab === 'planos' ? 'active' : ''}" data-fintab="planos">Planos e preços</button>
         </div>
-        ${finTab === 'cobrancas' ? invoicesTab() : expensesTab()}`;
+        ${finTab === 'planos' ? plansTab() : finTab === 'despesas' ? expensesTab() : invoicesTab()}`;
     },
     bind(view) {
         view.querySelectorAll('[data-fintab]').forEach(b => b.onclick = () => { finTab = b.dataset.fintab; route(); });
         const find = idv => state.invoices.find(i => i.id === idv);
 
+        if (finTab === 'planos') {
+            const pf = view.querySelector('#plans-form');
+            pf.onsubmit = e => {
+                e.preventDefault();
+                const prev = { ...SEED.planPrices };
+                pf.querySelectorAll('[data-plan]').forEach(inp => { SEED.planPrices[inp.dataset.plan] = Math.round(+inp.value * 100) / 100; });
+                if (!save()) { SEED.planPrices = prev; return; }
+                toast('Preços salvos! Valem para as próximas cobranças.'); route();
+            };
+            view.querySelectorAll('[data-del-plan]').forEach(b => b.onclick = () => {
+                if (!confirm(`Remover o plano ${b.dataset.delPlan}?`)) return;
+                delete SEED.planPrices[b.dataset.delPlan];
+                save(); toast('Plano removido.'); route();
+            });
+            const af = view.querySelector('#plan-add');
+            af.onsubmit = e => {
+                e.preventDefault();
+                const name = af.name.value.trim().replace(/\s+/g, ' ');
+                if (Object.keys(SEED.planPrices).some(n => n.toLowerCase() === name.toLowerCase())) return toast('Já existe um plano com esse nome.');
+                SEED.planPrices[name] = Math.round(+af.price.value * 100) / 100;
+                save(); toast(`Plano ${name} criado!`); route();
+            };
+            return;
+        }
         if (finTab === 'despesas') {
             view.querySelector('#exp-month').onchange = e => { expMonth = e.target.value; route(); };
             view.querySelectorAll('[data-del-exp]').forEach(b => b.onclick = () => {
