@@ -99,18 +99,26 @@ Para trocar o WhatsApp, edite a linha `whatsapp:` com DDI + DDD + número, só d
 
 ## Página inicial (index.html)
 
-A página inicial vende a consultoria e leva o visitante ao checkout, ao WhatsApp ou à área do aluno. Ela tem quatro seções, nesta ordem:
+A página inicial vende a consultoria e leva o visitante ao checkout, ao WhatsApp ou à área do aluno. Ela tem nove seções, nesta ordem:
 
 1. **Topo (hero):** título "Resultado de *atleta* pra você que é CLT", subtítulo sobre treinar 1h por dia, botões "Quero entrar pro time" (checkout) e "Área do aluno" (login), três destaques (1h, 100% online, 15% OFF com o cupom CHAMP) e um cartão de exemplo de treino.
-2. **O método:** seis cartões (1h por dia, ficha personalizada, dieta, evolução, feedback direto, tudo no app).
-3. **Sobre o coach:** foto do Sidnei (`assets/sidnei.jpg`) e um texto curto de apresentação.
-4. **Consultoria ("Entre pro time"):** o que está incluído e uma caixa com o cupom CHAMP e três botões: "Quero entrar pro time", "Tirar dúvidas no WhatsApp" e "Falar no Instagram".
+2. **É pra você se…:** quatro situações com que o visitante se identifica (pouco tempo, parou de evoluir, ganhar massa e perder gordura, quer acompanhamento).
+3. **O método:** seis cartões (1h por dia, ficha personalizada, dieta, evolução, feedback direto, tudo no app).
+4. **Por dentro do app:** três telas ilustrativas (treino com vídeo, evolução e fotos, chat com o coach), marcadas como ilustrativas.
+5. **Como funciona:** quatro passos (inscrição com o cupom, ponto de partida com fotos e medidas, plano montado pelo coach, acompanhamento e ajustes).
+6. **Sobre o coach:** foto do Sidnei (`assets/sidnei.jpg`), texto de apresentação, destaques e botão para o Instagram.
+7. **Consultoria ("Entre pro time"):** o que está incluído e uma caixa com o cupom CHAMP e três botões: "Quero entrar pro time", "Tirar dúvidas no WhatsApp" e "Falar no Instagram".
+8. **Dúvidas frequentes:** sete perguntas que abrem e fecham, respondidas só com o que o site realmente oferece (sem preços, prazos ou regras que o Sidnei ainda não definiu).
+9. **Chamada final:** "Bora construir seu físico?" com o cupom e os botões de checkout e WhatsApp.
+
+Não há depoimentos: a faixa de feedbacks foi removida a pedido, e só deve voltar com depoimentos reais e autorizados.
 
 Além das seções:
 
-- **Menu do topo:** logo, links para Método, Sobre e Consultoria, e o botão Entrar.
+- **Menu do topo:** logo, links para Método, Como funciona, Sobre, Dúvidas e Consultoria, e o botão Entrar. No celular, os links ficam num menu (☰).
+- **Animação ao rolar:** as seções aparecem suavemente; fica desligada para quem ativou "reduzir movimento" no aparelho.
 - **Botão flutuante do WhatsApp:** fica no canto inferior direito durante a rolagem.
-- **Rodapé:** links para Threads e Consultoria.
+- **Rodapé:** links para as seções, Instagram, Threads, WhatsApp e Área do aluno.
 - **Janela de login:** escolhe Aluno ou Coach, salva o nome no navegador e abre `app.html`. Não há verificação de senha.
 
 ## Área logada (app.html)
@@ -306,6 +314,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
+| 27 | `PENDING` | Página inicial ampliada: "É pra você se…", prévia do app, "Como funciona" em 4 passos, destaques e Instagram no Sobre, dúvidas frequentes, chamada final, menu no celular e animação ao rolar |
 | 26 | `43d359b` | Dashboard do aluno redesenhado: "Para fazer hoje", indicadores clicáveis com meta, gráfico de evolução com filtros (peso, gordura, cintura; 3 meses ou tudo) e linha da meta, semana planejada x feita e comentário do coach |
 | 25 | `86415bb` | Dashboard do coach redesenhado: indicadores clicáveis, "Para fazer agora", gráfico de recebido com filtro de período e valores, sessões de hoje/7 dias e lista de alunos com busca, filtros e motivo dos alertas |
 | 24 | `3852445` | Avaliação por fotos: o aluno envia frente, lado e costas; o coach tem uma fila de envios, compara com as fotos anteriores, comenta (o comentário pode ir para o chat) e marca como avaliada |

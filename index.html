@@ -9,19 +9,22 @@
     <meta name="description" content="Consultoria online de hipertrofia com Sidnei Muller. Construa seu físico treinando 1h por dia.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css?v=202610071417">
-    <script src="js/config.js?v=202610071417"></script>
+    <link rel="stylesheet" href="css/style.css?v=202610071528">
+    <script src="js/config.js?v=202610071528"></script>
 </head>
 <body>
     <header class="nav">
         <a href="#" class="logo"><span class="logo-mark" aria-hidden="true">SM</span><span class="logo-text">Sidnei<b>Muller</b><em>Coach</em></span></a>
-        <nav class="nav-links">
+        <nav class="nav-links" id="nav-links">
             <a href="#metodo">Método</a>
+            <a href="#como-funciona">Como funciona</a>
             <a href="#sobre">Sobre</a>
+            <a href="#duvidas">Dúvidas</a>
             <a href="#consultoria">Consultoria</a>
         </nav>
         <div class="nav-actions">
             <button class="btn btn-primary btn-sm" data-open-login>Entrar</button>
+            <button class="btn btn-sm nav-toggle" id="nav-toggle" aria-label="Abrir menu" aria-expanded="false" aria-controls="nav-links">☰</button>
         </div>
     </header>
 
@@ -53,7 +56,23 @@
         </div>
     </section></div>
 
-    <section class="section" id="metodo">
+    <section class="section section-tight reveal" id="pra-quem">
+        <div class="fit-box">
+            <div>
+                <div class="pill">Pra quem é</div>
+                <h2 class="section-title">É pra você se…</h2>
+                <p class="section-sub" style="margin-bottom:0">Se você se identificou com pelo menos um desses, o time é seu lugar.</p>
+            </div>
+            <ul class="fit-list">
+                <li><span>💼</span>Trabalha o dia inteiro e tem pouco tempo pra treinar</li>
+                <li><span>📉</span>Já treina, mas sente que parou de evoluir</li>
+                <li><span>💪</span>Quer ganhar massa e perder gordura com um plano claro</li>
+                <li><span>🎯</span>Quer alguém acompanhando e cobrando de perto</li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="section reveal" id="metodo">
         <h2 class="section-title">O método</h2>
         <p class="section-sub">Pouco tempo não é desculpa. Tudo é pensado para quem trabalha o dia inteiro e ainda quer um físico de atleta.</p>
         <div class="features">
@@ -66,18 +85,74 @@
         </div>
     </section>
 
-    <section class="section" id="sobre">
+    <section class="section reveal" id="app">
+        <h2 class="section-title">Por dentro do app</h2>
+        <p class="section-sub">Tudo o que você precisa pra evoluir fica num lugar só, direto no navegador do celular. Não precisa instalar nada.</p>
+        <div class="app-previews">
+            <div class="preview">
+                <div class="preview-screen">
+                    <div class="card-head"><h3>Treino B • Costas</h3><span class="badge">2 de 5</span></div>
+                    <div class="mini-row done"><span>✓ Puxada frontal</span><span class="muted small">4 × 10</span></div>
+                    <div class="mini-row done"><span>✓ Remada curvada</span><span class="muted small">4 × 8</span></div>
+                    <div class="mini-row"><span>Remada baixa</span><span class="play">▶ vídeo</span></div>
+                    <div class="mini-row"><span>Rosca direta</span><span class="play">▶ vídeo</span></div>
+                </div>
+                <h3>Treino com vídeo</h3>
+                <p>Sua ficha com séries, cargas e descanso, e o vídeo de execução de cada exercício. Vai marcando o que já fez.</p>
+            </div>
+            <div class="preview">
+                <div class="preview-screen">
+                    <div class="card-head"><h3>Sua evolução</h3><span class="badge">Peso</span></div>
+                    <svg class="preview-chart" viewBox="0 0 260 110" aria-hidden="true">
+                        <line x1="0" x2="260" y1="92" y2="92" class="goal"/>
+                        <path class="area" d="M8,18 L58,30 L108,44 L158,52 L208,66 L252,74 L252,104 L8,104 Z"/>
+                        <path class="line" d="M8,18 L58,30 L108,44 L158,52 L208,66 L252,74"/>
+                        <circle cx="252" cy="74" r="5"/>
+                        <text x="8" y="86">meta</text>
+                    </svg>
+                    <div class="mini-row"><span class="muted small">Peso, gordura e cintura</span><span class="badge green">▼ caindo</span></div>
+                </div>
+                <h3>Evolução e fotos</h3>
+                <p>Gráficos de peso, gordura e cintura. Você envia fotos de frente, lado e costas, e o coach compara com as anteriores e comenta.</p>
+            </div>
+            <div class="preview">
+                <div class="preview-screen chat-preview">
+                    <div class="bubble them">Coach, terminei o treino de hoje! Senti bem o posterior 🔥</div>
+                    <div class="bubble me">Boa! Na próxima sobe 2 kg no stiff. Segue firme 💪</div>
+                    <div class="bubble them">Fechado! 👊</div>
+                </div>
+                <h3>Coach sempre perto</h3>
+                <p>Chat direto com o coach, agenda de sessões e lembretes do que fazer no dia: treino, água e avaliações.</p>
+            </div>
+        </div>
+        <p class="muted small" style="margin-top:14px">Telas ilustrativas.</p>
+    </section>
+
+    <section class="section reveal" id="como-funciona">
+        <h2 class="section-title">Como funciona</h2>
+        <p class="section-sub">Do primeiro dia aos ajustes do dia a dia, em quatro passos.</p>
+        <ol class="steps">
+            <li><b>1</b><h3>Inscrição</h3><p>Entre pela página da consultoria e use o cupom <strong data-coupon>CHAMP</strong> pra ganhar <span data-discount>15%</span> de desconto.</p></li>
+            <li><b>2</b><h3>Ponto de partida</h3><p>Crie seu acesso, conte sua rotina e mande suas fotos e medidas iniciais pelo app.</p></li>
+            <li><b>3</b><h3>Seu plano</h3><p>O coach monta sua ficha de treino e seu plano alimentar pensando no seu objetivo e no seu tempo.</p></li>
+            <li><b>4</b><h3>Acompanhamento</h3><p>Você treina, registra no app e fala com o coach. Nas avaliações, ele analisa sua evolução e ajusta o plano.</p></li>
+        </ol>
+    </section>
+
+    <section class="section reveal" id="sobre">
         <div class="about">
             <div class="about-photo"><img src="assets/sidnei.jpg" alt="Sidnei Muller, coach de hipertrofia" loading="lazy"></div>
             <div>
                 <div class="pill">Sobre o coach</div>
                 <h2 class="section-title">Sidnei Muller</h2>
                 <p class="section-sub">Coach de hipertrofia focado em quem tem rotina puxada. A proposta é simples: treino eficiente de 1h por dia, dieta que cabe no seu dia a dia e acompanhamento de perto para você evoluir de verdade junto com o time.</p>
+                <div class="about-tags"><span>🏋️ Hipertrofia</span><span>⏱️ Treino de 1h</span><span>💼 Pra quem trabalha</span><span>📱 100% online</span></div>
+                <a class="btn brand-ig" data-link="instagram" style="margin-top:22px">Acompanhe no Instagram <span data-instagram-handle>@sidneiomuller</span></a>
             </div>
         </div>
     </section>
 
-    <section class="section" id="consultoria">
+    <section class="section reveal" id="consultoria">
         <div class="offer">
             <div>
                 <div class="pill">Consultoria online</div>
@@ -103,10 +178,47 @@
     </section>
 
 
+    <section class="section reveal" id="duvidas">
+        <h2 class="section-title">Dúvidas frequentes</h2>
+        <p class="section-sub">Não achou sua resposta? Chama no WhatsApp que a gente te ajuda.</p>
+        <div class="faq">
+            <details><summary>Tenho pouco tempo. Funciona pra mim?</summary>
+                <p>Sim. O método foi pensado pra quem trabalha o dia inteiro: treinos objetivos de cerca de 1h por dia, montados pra render o máximo no tempo que você tem.</p></details>
+            <details><summary>Preciso instalar algum aplicativo?</summary>
+                <p>Não. A área do aluno funciona no navegador do celular ou do computador. É só entrar com seu e-mail e senha.</p></details>
+            <details><summary>Como vejo a execução dos exercícios?</summary>
+                <p>Cada exercício da sua ficha tem o vídeo de execução, além das séries, repetições, carga e descanso.</p></details>
+            <details><summary>Como acompanho minha evolução?</summary>
+                <p>Você registra peso e medidas e envia fotos de frente, lado e costas pelo app. O coach compara com as anteriores, comenta e ajusta seu plano. Os gráficos mostram sua evolução ao longo do tempo.</p></details>
+            <details><summary>Consigo falar com o coach?</summary>
+                <p>Sim. Dentro do app tem um chat direto com o coach. Antes de entrar, você pode tirar suas dúvidas pelo WhatsApp ou pelo Instagram.</p></details>
+            <details><summary>Como uso o cupom de desconto?</summary>
+                <p>Na hora da inscrição, use o cupom <strong data-coupon>CHAMP</strong> pra ganhar <span data-discount>15%</span> de desconto na consultoria.</p></details>
+            <details><summary>Já sou aluno. Como acesso?</summary>
+                <p>Clique em <a href="#" data-open-login data-role="cliente" class="link">Área do aluno</a> (ou em “Entrar”, no topo da página) e use seu e-mail e senha.</p></details>
+        </div>
+    </section>
+
+    <section class="section reveal">
+        <div class="final-cta">
+            <h2>Bora construir seu físico?</h2>
+            <p>Treino, dieta e acompanhamento num lugar só. Use o cupom <strong data-coupon>CHAMP</strong> e ganhe <span data-discount>15%</span> de desconto.</p>
+            <div class="hero-actions" style="justify-content:center">
+                <a class="btn btn-primary" data-link="checkout">Quero entrar pro time →</a>
+                <a class="btn brand-wa" data-link="whatsapp">Tirar dúvidas no WhatsApp</a>
+            </div>
+        </div>
+    </section>
+
     <footer class="footer">
         <div class="footer-links">
+            <a href="#metodo">Método</a>
+            <a href="#como-funciona">Como funciona</a>
+            <a href="#duvidas">Dúvidas</a>
+            <a data-link="instagram">Instagram</a>
             <a data-link="threads">Threads</a>
-            <a data-link="checkout">Consultoria</a>
+            <a data-link="whatsapp">WhatsApp</a>
+            <a href="#" data-open-login data-role="cliente">Área do aluno</a>
         </div>
         <div>© <span id="year"></span> Sidnei Muller Coach • Consultoria online</div>
     </footer>
@@ -144,9 +256,23 @@
         </div>
     </div>
 
-    <script src="js/backend.js?v=202610071417"></script>
+    <script src="js/backend.js?v=202610071528"></script>
     <script>
         document.getElementById('year').textContent = new Date().getFullYear();
+
+        // Menu do celular
+        const navToggle = document.getElementById('nav-toggle'), navLinks = document.getElementById('nav-links');
+        const setMenu = open => { navLinks.classList.toggle('open', open); navToggle.setAttribute('aria-expanded', open); navToggle.textContent = open ? '✕' : '☰'; };
+        navToggle.onclick = () => setMenu(!navLinks.classList.contains('open'));
+        navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => setMenu(false)));
+
+        // Seções aparecem suavemente ao rolar (desligado para quem prefere menos movimento)
+        if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            const io = new IntersectionObserver(entries => entries.forEach(e => {
+                if (e.isIntersecting) { e.target.classList.add('shown'); io.unobserve(e.target); }
+            }), { rootMargin: '0px 0px -8% 0px' });
+            document.querySelectorAll('.reveal').forEach(el => { el.classList.add('will-reveal'); io.observe(el); });
+        }
 
         const modal = document.getElementById('login-modal');
         const form = document.getElementById('login-form');
@@ -228,7 +354,8 @@
             if (Backend.hasAuthRedirect()) handleEmailLink();
         }
 
-        document.querySelectorAll('[data-open-login]').forEach(el => el.addEventListener('click', () => {
+        document.querySelectorAll('[data-open-login]').forEach(el => el.addEventListener('click', e => {
+            e.preventDefault();
             if (!Backend.enabled) setRole(el.dataset.role || 'cliente');
             modal.classList.add('open');
         }));

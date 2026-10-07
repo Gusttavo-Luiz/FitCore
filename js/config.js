@@ -35,4 +35,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.querySelectorAll('[data-coupon]').forEach(el => el.textContent = SITE.coupon);
     document.querySelectorAll('[data-discount]').forEach(el => el.textContent = SITE.couponDiscount);
+    document.querySelectorAll('[data-instagram-handle]').forEach(el => el.textContent = SITE.instagramHandle);
 });
