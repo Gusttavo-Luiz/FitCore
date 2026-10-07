@@ -321,7 +321,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
-| 29 | `PENDING` | Vencimento definido pelo coach: campo "1º vencimento" no cadastro (cria a 1ª mensalidade), dia do vencimento editável em Editar (cobranças em aberto acompanham), mensalidades em lote usam esse dia; migração 0008 |
+| 29 | `ac61eb6` | Vencimento definido pelo coach: campo "1º vencimento" no cadastro (cria a 1ª mensalidade), dia do vencimento editável em Editar (cobranças em aberto acompanham), mensalidades em lote usam esse dia; migração 0008 |
 | 28 | `d91d6f3` | Dieta no banco: o coach monta o plano alimentar de cada aluno (nova tela Dietas) e o aluno registra água e refeições do dia; migração 0007 com regras de acesso e testes |
 | 27 | `f0fe99c` | Página inicial ampliada: "É pra você se…", prévia do app, "Como funciona" em 4 passos, destaques e Instagram no Sobre, dúvidas frequentes, chamada final, menu no celular e animação ao rolar |
 | 26 | `43d359b` | Dashboard do aluno redesenhado: "Para fazer hoje", indicadores clicáveis com meta, gráfico de evolução com filtros (peso, gordura, cintura; 3 meses ou tudo) e linha da meta, semana planejada x feita e comentário do coach |
