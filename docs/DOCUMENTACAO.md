@@ -314,7 +314,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
-| 27 | `PENDING` | Página inicial ampliada: "É pra você se…", prévia do app, "Como funciona" em 4 passos, destaques e Instagram no Sobre, dúvidas frequentes, chamada final, menu no celular e animação ao rolar |
+| 27 | `f0fe99c` | Página inicial ampliada: "É pra você se…", prévia do app, "Como funciona" em 4 passos, destaques e Instagram no Sobre, dúvidas frequentes, chamada final, menu no celular e animação ao rolar |
 | 26 | `43d359b` | Dashboard do aluno redesenhado: "Para fazer hoje", indicadores clicáveis com meta, gráfico de evolução com filtros (peso, gordura, cintura; 3 meses ou tudo) e linha da meta, semana planejada x feita e comentário do coach |
 | 25 | `86415bb` | Dashboard do coach redesenhado: indicadores clicáveis, "Para fazer agora", gráfico de recebido com filtro de período e valores, sessões de hoje/7 dias e lista de alunos com busca, filtros e motivo dos alertas |
 | 24 | `3852445` | Avaliação por fotos: o aluno envia frente, lado e costas; o coach tem uma fila de envios, compara com as fotos anteriores, comenta (o comentário pode ir para o chat) e marca como avaliada |
