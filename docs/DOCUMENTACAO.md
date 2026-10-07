@@ -68,6 +68,7 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `supabase/migrations/0005_expenses.sql` | — | Despesas do coach (Financeiro) |
 | `supabase/migrations/0006_assessment_review.sql` | — | Envio de fotos pelo aluno e avaliação pelo coach (status, comentário, medidas opcionais) |
 | `js/features/chat.js` | — | Telas do chat com o Supabase (lista de conversas, tempo real, não lidas) |
+| `js/features/painel-aluno.js` | — | Dashboard do aluno: "Para fazer hoje", evolução com filtros e meta, semana planejada x feita |
 | `js/features/painel.js` | — | Dashboard do coach: indicadores clicáveis, "Para fazer agora", recebido por mês com filtro de período, sessões e alunos com filtros |
 | `supabase/tests/` | — | Testes automáticos das regras de acesso (PostgreSQL local) |
 | `supabase/README.md` | — | Passo a passo para ligar o Supabase |
@@ -120,7 +121,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 
 | Tela | Endereço | O que faz |
 | --- | --- | --- |
-| Dashboard | `dashboard` | Peso, gordura, treinos da semana, água, treino do dia, meta, gráfico de peso, próximas sessões |
+| Dashboard | `dashboard` | Indicadores clicáveis (peso, % da meta, treinos na semana e nos últimos 30 dias, água com +250/+500 ml). **Para fazer hoje**: treino do dia, água, sessão de hoje, mensalidade perto de vencer ou atrasada, mensagens novas e lembrete de mandar fotos (a cada 28 dias). Treino de hoje (ou o próximo, no dia de descanso). **Sua evolução** com peso, gordura ou cintura, últimos 3 meses ou desde o início, linha da meta, início, atual e variação. Semana com treinos feitos, planejados (letra do treino) e não feitos. Próximas sessões e último comentário do coach |
 | Treinos | `treinos/<ficha>` | Fichas A, B, C…; marcar exercícios, finalizar treino, cronômetro de descanso |
 | Exercícios | `biblioteca/<exercício>` | 35 exercícios com busca, filtro por grupo, dicas e vídeo |
 | Dieta | `dieta` | 6 refeições marcáveis e resumo de calorias e macros |
@@ -305,6 +306,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
+| 26 | `PENDING` | Dashboard do aluno redesenhado: "Para fazer hoje", indicadores clicáveis com meta, gráfico de evolução com filtros (peso, gordura, cintura; 3 meses ou tudo) e linha da meta, semana planejada x feita e comentário do coach |
 | 25 | `86415bb` | Dashboard do coach redesenhado: indicadores clicáveis, "Para fazer agora", gráfico de recebido com filtro de período e valores, sessões de hoje/7 dias e lista de alunos com busca, filtros e motivo dos alertas |
 | 24 | `3852445` | Avaliação por fotos: o aluno envia frente, lado e costas; o coach tem uma fila de envios, compara com as fotos anteriores, comenta (o comentário pode ir para o chat) e marca como avaliada |
 | 23 | `7ab6816` | Financeiro ampliado: indicadores, gráfico receitas x despesas, receber com forma de pagamento, cobrar no WhatsApp, recibo, editar/excluir, mensalidades em lote, cupom, exportar CSV e despesas |

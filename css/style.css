@@ -546,6 +546,20 @@ tr:last-child td { border-bottom: 0; }
 .adh.low { color: var(--orange); }
 .adh.low .progress span { background: var(--orange); }
 .alert-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+/* ---------- Painel do aluno ---------- */
+.todo-item.is-done { opacity: .6; }
+.todo-item.is-done .todo-ico { background: rgba(47, 214, 123, .15); color: var(--green); font-weight: 800; }
+.todo-item.late .title { color: var(--red); }
+.evo-chart .goal-line { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 6 5; }
+.evo-chart .goal-text { font-size: 12px; font-weight: 600; }
+.evo-chart .pt-value { fill: var(--text); font-size: 12px; font-weight: 700; }
+.day .day-tag { display: block; margin-top: 4px; font-size: 11px; font-weight: 700; min-height: 14px; }
+.day.missed { box-shadow: inset 0 0 0 1px var(--orange); }
+.day.missed .day-tag { color: var(--orange); }
+.lg-done { background: rgba(var(--accent-rgb), .25); border: 1px solid var(--accent); }
+.lg-planned { background: var(--surface-2); border: 1px solid var(--border-hover); }
+.lg-missed { background: var(--surface-2); border: 1px solid var(--orange); }
+@media (max-width: 1100px) { .todo-card { order: -1; } }
 @media (max-width: 640px) {
     .dash-summary { grid-template-columns: 1fr 1fr; }
     .dash-summary div:last-child { grid-column: span 2; }
