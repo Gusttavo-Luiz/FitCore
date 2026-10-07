@@ -199,9 +199,10 @@ function monthlyBatch(ym) {
         !state.invoices.some(i => i.student === s.name && ymOf(i.due) === ym)
     ).map(s => {
         const prev = state.invoices.filter(i => i.student === s.name).sort((a, b) => b.due.localeCompare(a.due))[0];
-        const day = prev ? Math.min(+prev.due.slice(8, 10), 28) : 10;
+        // Dia definido pelo coach; sem ele, o mesmo dia da última cobrança (ou 10)
+        const day = s.dueDay || (prev ? +prev.due.slice(8, 10) : 10);
         return { id: newId('inv'), student: s.name, plan: s.plan, amount: SEED.planPrices[s.plan],
-            due: `${ym}-${String(day).padStart(2, '0')}`, paidAt: null, method: null };
+            due: withDay(`${ym}-01`, day), paidAt: null, method: null };
     });
 }
 
@@ -241,7 +242,7 @@ function invoicesTab() {
         <div class="card">
             <div class="card-head"><h2>Mensalidades em lote</h2></div>
             <p class="muted small" style="margin-bottom:14px">Cria a cobrança do mês para cada aluno ativo que ainda não tem uma,
-                com o valor do plano e o mesmo dia de vencimento do mês anterior.</p>
+                com o valor do plano, no dia de vencimento definido no cadastro do aluno (ou no mesmo dia do mês anterior).</p>
             <div class="fin-batch">
                 <button class="btn ${batchNow.length ? 'btn-primary' : ''}" data-batch="${today.slice(0, 7)}" ${batchNow.length ? '' : 'disabled'}>
                     ${batchNow.length ? `Gerar ${ymLabel(today.slice(0, 7), true)} — ${batchNow.length} aluno(s), ${money(sumBy(batchNow))}` : `${ymLabel(today.slice(0, 7), true)}: todas geradas ✓`}</button>

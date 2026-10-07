@@ -57,7 +57,7 @@ function dashTable() {
             <td><div class="cell-user"><div class="avatar" style="width:32px;height:32px;font-size:12px">${initials(s.name)}</div>${esc(s.name)}</div></td>
             <td>${esc(s.plan)}</td>
             <td><div class="adh ${s.adherence < LOW_ADHERENCE ? 'low' : ''}"><div class="progress"><span style="width:${s.adherence}%"></span></div>${s.adherence}%</div></td>
-            <td class="muted">${esc(s.lastWorkout)}</td><td>${esc(s.due)}</td>
+            <td class="muted">${esc(s.lastWorkout)}</td><td>${esc(studentDue(s))}</td>
             <td><div class="alert-badges">${alerts.length ? alerts.map(a => `<span class="badge ${a.color}">${a.label}</span>`).join('')
                 : '<span class="badge green">Em dia ✓</span>'}</div></td>
             <td>${chatId ? `<a class="btn btn-ghost btn-sm" href="#/personal/mensagens/${encodeURIComponent(chatId)}" title="Abrir conversa">💬</a>` : ''}</td>

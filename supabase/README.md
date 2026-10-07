@@ -16,7 +16,7 @@ O site funciona em dois modos:
 2. **Criar as tabelas e as regras de segurança**
    - No projeto, abra **SQL Editor → New query**.
    - Cole o conteúdo inteiro de [`migrations/0001_schema.sql`](migrations/0001_schema.sql) e clique em **Run**.
-   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) , [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real) , [`migrations/0004_default_videos.sql`](migrations/0004_default_videos.sql) (vídeos que já vêm cadastrados, como o do Burpee) , [`migrations/0005_expenses.sql`](migrations/0005_expenses.sql) (despesas do Financeiro), [`migrations/0006_assessment_review.sql`](migrations/0006_assessment_review.sql) (aluno envia fotos, coach avalia) e [`migrations/0007_diet.sql`](migrations/0007_diet.sql) (dieta de cada aluno e registro diário de água e refeições).
+   - Faça o mesmo, nesta ordem, com [`migrations/0002_student_invites.sql`](migrations/0002_student_invites.sql) (coach cadastra alunos) , [`migrations/0003_messages.sql`](migrations/0003_messages.sql) (chat em tempo real) , [`migrations/0004_default_videos.sql`](migrations/0004_default_videos.sql) (vídeos que já vêm cadastrados, como o do Burpee) , [`migrations/0005_expenses.sql`](migrations/0005_expenses.sql) (despesas do Financeiro), [`migrations/0006_assessment_review.sql`](migrations/0006_assessment_review.sql) (aluno envia fotos, coach avalia), [`migrations/0007_diet.sql`](migrations/0007_diet.sql) (dieta de cada aluno e registro diário de água e refeições) e [`migrations/0008_due_day.sql`](migrations/0008_due_day.sql) (vencimento definido pelo coach no cadastro).
    - Pode rodar de novo sem problema: os arquivos não apagam nada.
 
 3. **Configurar o login**
@@ -46,16 +46,16 @@ O site funciona em dois modos:
 
 ## Como os alunos entram
 
-- **Coach cadastra (recomendado):** em **Alunos → Cadastrar aluno**, o coach informa nome, e-mail, plano e objetivo. O aluno recebe um e-mail com um link de acesso; ao clicar, entra no site e cria a própria senha. O perfil já nasce com o plano e o objetivo escolhidos.
+- **Coach cadastra (recomendado):** em **Alunos → Cadastrar aluno**, o coach informa nome, e-mail, plano, objetivo e a data do 1º vencimento. O aluno recebe um e-mail com um link de acesso; ao clicar, entra no site e cria a própria senha. O perfil já nasce com o plano, o objetivo e o dia de vencimento escolhidos, e a 1ª mensalidade é criada com o valor do plano.
 - **Aluno se cadastra sozinho:** em **Entrar → Criar conta**. Se o coach já tiver cadastrado aquele e-mail, o perfil também recebe o plano e o objetivo do convite.
 - Se o e-mail do convite não sair (ex.: limite de envios), o cadastro fica salvo e o aluno pode usar **Criar conta** com o mesmo e-mail.
-- Para mudar **plano, objetivo ou status** depois, o coach clica em **Editar** na linha do aluno, na lista de Alunos.
+- Para mudar **plano, objetivo, status ou dia de vencimento** depois, o coach clica em **Editar** na linha do aluno, na lista de Alunos. Ao mudar o dia, as cobranças em aberto que ainda não venceram passam para o novo dia.
 
 ## O que fica no banco
 
 | Tabela | Conteúdo | Quem lê | Quem grava |
 | --- | --- | --- | --- |
-| `profiles` | Nome, e-mail, papel, plano, objetivo, status, altura, idade, telefone, peso-meta | O próprio usuário; coach lê todos | O próprio (exceto papel, plano e status); coach |
+| `profiles` | Nome, e-mail, papel, plano, objetivo, status, dia de vencimento, altura, idade, telefone, peso-meta | O próprio usuário; coach lê todos | O próprio (exceto papel, plano, status e vencimento); coach |
 | `workout_plans` | Fichas de treino (exercícios em JSON) | Aluno dono; coach | Coach |
 | `workout_logs` | Exercícios marcados por ficha e dia | Aluno dono; coach | Aluno dono; coach |
 | `workout_days` | Dias com treino finalizado | Aluno dono; coach | Aluno dono; coach |
@@ -64,7 +64,7 @@ O site funciona em dois modos:
 | `sessions` | Agenda | Aluno dono; coach | Aluno: só pede (pendente), remarca ou cancela. Coach: tudo |
 | `invoices` | Cobranças | Aluno dono; coach | Coach |
 | `exercise_videos` | Link do vídeo de cada exercício | Todos os logados | Coach |
-| `student_invites` | Alunos cadastrados pelo coach (nome, e-mail, plano, objetivo) | Coach | Coach |
+| `student_invites` | Alunos cadastrados pelo coach (nome, e-mail, plano, objetivo, 1º vencimento e valor) | Coach | Coach |
 | `expenses` | Despesas do coach (descrição, categoria, valor, data) | Coach | Coach |
 | `diet_plans` | Plano alimentar de cada aluno: metas (kcal, proteínas, carboidratos, gorduras, água) e refeições | Aluno dono; coach | Coach |
 | `daily_logs` | Água bebida e refeições marcadas por dia | Aluno dono; coach | Aluno dono; coach |
@@ -75,7 +75,7 @@ A função `busy_slots(de, até)` devolve só data, hora e duração das sessõe
 
 ## Testes
 
-As regras de acesso têm 76 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
+As regras de acesso têm 82 verificações automáticas (`tests/rls_test.sql`), rodadas num PostgreSQL local que imita o Supabase (`tests/supabase_stub.sql`):
 
 ```bash
 createdb teste
@@ -87,6 +87,7 @@ psql -d teste -f supabase/migrations/0004_default_videos.sql
 psql -d teste -f supabase/migrations/0005_expenses.sql
 psql -d teste -f supabase/migrations/0006_assessment_review.sql
 psql -d teste -f supabase/migrations/0007_diet.sql
+psql -d teste -f supabase/migrations/0008_due_day.sql
 psql -d teste -f supabase/tests/rls_test.sql   # termina com "TODOS OS TESTES PASSARAM"
 ```
 

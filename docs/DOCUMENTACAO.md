@@ -69,6 +69,7 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `supabase/migrations/0005_expenses.sql` | — | Despesas do coach (Financeiro) |
 | `supabase/migrations/0006_assessment_review.sql` | — | Envio de fotos pelo aluno e avaliação pelo coach (status, comentário, medidas opcionais) |
 | `supabase/migrations/0007_diet.sql` | — | Dieta de cada aluno (`diet_plans`) e registro diário de água e refeições (`daily_logs`) |
+| `supabase/migrations/0008_due_day.sql` | — | Dia de vencimento do aluno, definido pelo coach no cadastro; 1ª cobrança criada quando o aluno aceita o convite |
 | `js/features/chat.js` | — | Telas do chat com o Supabase (lista de conversas, tempo real, não lidas) |
 | `js/features/painel-aluno.js` | — | Dashboard do aluno: "Para fazer hoje", evolução com filtros e meta, semana planejada x feita |
 | `js/features/painel.js` | — | Dashboard do coach: indicadores clicáveis, "Para fazer agora", recebido por mês com filtro de período, sessões e alunos com filtros |
@@ -147,7 +148,7 @@ A área logada tem 10 telas para o aluno e 8 para o coach. Cada tela tem um ende
 | Tela | Endereço | O que faz |
 | --- | --- | --- |
 | Dashboard | `dashboard` | Indicadores clicáveis (alunos ativos, recebido no mês e quanto falta receber, aderência média, quem precisa de atenção). **Para fazer agora**: fotos para avaliar, pedidos de horário, cobranças atrasadas e mensagens não lidas, cada um com atalho. **Próximas sessões** (hoje ou 7 dias). **Recebido por mês** com filtro de 3, 6 ou 12 meses, valores nas barras, linha de média, total, média e melhor mês, e versão em tabela. **Alunos** com busca, plano, ordenação e filtros (precisam de atenção, pagamento atrasado, aderência abaixo de 60%), mostrando o motivo de cada alerta e um atalho para o chat |
-| Alunos | `alunos` | Lista com busca e filtro; cadastro de aluno; botão Editar para mudar plano, objetivo e status |
+| Alunos | `alunos` | Lista com busca e filtro (a coluna Vencimento mostra a próxima cobrança em aberto ou "todo dia X"); cadastro de aluno com a data do 1º vencimento (cria a 1ª mensalidade com o valor do plano); botão Editar para mudar plano, objetivo, status e dia do vencimento |
 | Fichas de treino | `fichas/<ficha>` | Criar, editar, reordenar, duplicar, excluir e copiar fichas de cada aluno |
 | Dietas | `dietas` | Plano alimentar de cada aluno: metas do dia (kcal, macros, água), refeições com horário, calorias e alimentos (adicionar, reordenar, remover), orientações; começar do modelo, em branco ou copiar de outro aluno. Mostra o que o aluno marcou nos últimos 7 dias |
 | Exercícios | `biblioteca/<exercício>` | Igual ao aluno, mais o campo para colar o link do vídeo (YouTube, Vimeo ou .mp4) |
@@ -244,7 +245,7 @@ O backend usa o Supabase: banco PostgreSQL, login por e-mail e senha e armazenam
 | Dashboard do aluno | Meta de exemplo (78 kg) | Peso-meta definido pelo aluno no Perfil |
 | Mensagens | Lista de alunos com conversa particular; mensagens salvas no navegador e respostas automáticas | Chat real em tempo real: o coach tem uma lista de conversas (uma por aluno, com busca e não lidas); as duas pontas veem quando a mensagem foi lida |
 
-**Testes:** 76 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 46 verificações (mais 16 do chat, com duas abas conversando em tempo real): cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino, pagamento e envio de fotos com avaliação do coach. Um teste separado, com 9 verificações, cobre a dieta: o coach monta, a aluna marca refeições e água, e o coach acompanha.
+**Testes:** 82 verificações das regras de acesso em PostgreSQL 16 (`supabase/tests/rls_test.sql`). Também há um teste de ponta a ponta no navegador com um Supabase simulado, com 49 verificações (mais 16 do chat, com duas abas conversando em tempo real): cadastro, convite do coach com criação de senha, login, senha errada, medição, pedido de horário, foto, confirmação pelo coach, ficha, cobrança, vídeo, treino, pagamento e envio de fotos com avaliação do coach. Um teste separado, com 9 verificações, cobre a dieta: o coach monta, a aluna marca refeições e água, e o coach acompanha.
 
 **Dieta no banco:** a migração `0007` cria `diet_plans` (o coach monta, o aluno só lê) e `daily_logs` (o aluno registra água e refeições do dia; o coach lê). As refeições feitas são guardadas pela posição no plano.
 
@@ -320,6 +321,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
+| 29 | `PENDING` | Vencimento definido pelo coach: campo "1º vencimento" no cadastro (cria a 1ª mensalidade), dia do vencimento editável em Editar (cobranças em aberto acompanham), mensalidades em lote usam esse dia; migração 0008 |
 | 28 | `d91d6f3` | Dieta no banco: o coach monta o plano alimentar de cada aluno (nova tela Dietas) e o aluno registra água e refeições do dia; migração 0007 com regras de acesso e testes |
 | 27 | `f0fe99c` | Página inicial ampliada: "É pra você se…", prévia do app, "Como funciona" em 4 passos, destaques e Instagram no Sobre, dúvidas frequentes, chamada final, menu no celular e animação ao rolar |
 | 26 | `43d359b` | Dashboard do aluno redesenhado: "Para fazer hoje", indicadores clicáveis com meta, gráfico de evolução com filtros (peso, gordura, cintura; 3 meses ou tudo) e linha da meta, semana planejada x feita e comentário do coach |

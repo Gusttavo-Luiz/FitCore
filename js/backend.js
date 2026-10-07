@@ -86,10 +86,11 @@ const Backend = (() => {
 
     // Coach cadastra um aluno: guarda o convite e envia o link de acesso por e-mail.
     // Devolve null se o e-mail saiu, ou a mensagem de erro do envio (o convite fica salvo).
-    api.inviteStudent = async ({ name, email, plan, goal }) => {
+    api.inviteStudent = async ({ name, email, plan, goal, dueDay, firstDue, firstAmount }) => {
         email = email.trim().toLowerCase();
         if (api.people.some(p => (p.email || '').toLowerCase() === email)) throw new Error('Já existe uma conta com esse e-mail.');
-        check(await sb.from('student_invites').upsert({ email, full_name: name, plan, goal, invited_by: api.profile.id }));
+        check(await sb.from('student_invites').upsert({ email, full_name: name, plan, goal, invited_by: api.profile.id,
+            due_day: dueDay || null, first_due: firstDue || null, first_amount: firstAmount || null }));
         const { error } = await sb.auth.signInWithOtp({
             email,
             options: { shouldCreateUser: true, data: { full_name: name }, emailRedirectTo: location.href.replace(/[^/]*$/, 'index.html') }
@@ -98,12 +99,15 @@ const Backend = (() => {
         return error ? error.message : null;
     };
 
-    // Coach altera plano, objetivo e status de um aluno (ou de um convite ainda não aceito)
-    api.updateStudent = async (student, { plan, goal, status }) => {
+    // Coach altera plano, objetivo, status e dia de vencimento de um aluno (ou de um convite ainda não aceito)
+    api.updateStudent = async (student, { plan, goal, status, dueDay }) => {
         if (student.email && !student.id) {
-            check(await sb.from('student_invites').update({ plan, goal }).eq('email', student.email));
+            const change = { plan, goal, due_day: dueDay };
+            // A 1ª cobrança do convite acompanha o novo dia
+            if (dueDay && student.firstDue) change.first_due = withDay(student.firstDue, dueDay);
+            check(await sb.from('student_invites').update(change).eq('email', student.email));
         } else {
-            check(await sb.from('profiles').update({ plan, goal, status }).eq('id', student.id));
+            check(await sb.from('profiles').update({ plan, goal, status, due_day: dueDay }).eq('id', student.id));
         }
         await api.refreshStudents();
     };
@@ -283,7 +287,7 @@ const Backend = (() => {
             const open = state.invoices.filter(i => i.student === p.full_name && !i.paidAt).sort((a, b) => a.due.localeCompare(b.due));
             const lastDay = myDays.at(-1);
             return {
-                id: p.id, name: p.full_name || p.email, plan: p.plan, goal: p.goal, status: p.status,
+                id: p.id, name: p.full_name || p.email, plan: p.plan, goal: p.goal, status: p.status, dueDay: p.due_day || null,
                 adherence: Math.min(100, Math.round(last28 / 20 * 100)), // meta: 5 treinos por semana
                 lastWorkout: !lastDay ? '—' : lastDay === today ? 'Hoje' : lastDay === offsetDate(-1) ? 'Ontem' : fmtDate(lastDay),
                 due: open[0] ? fmtDate(open[0].due, { day: '2-digit', month: '2-digit' }) : '—'
@@ -291,7 +295,8 @@ const Backend = (() => {
         });
         // Ficam fora de SEED.students: sem conta ainda, não há onde salvar fichas ou agenda
         SEED.invites = invites.map(i => ({
-            name: i.full_name, email: i.email, plan: i.plan, goal: i.goal, status: 'Convidado', adherence: 0, lastWorkout: '—', due: '—'
+            name: i.full_name, email: i.email, plan: i.plan, goal: i.goal, status: 'Convidado', adherence: 0, lastWorkout: '—', due: '—',
+            dueDay: i.due_day || null, firstDue: i.first_due || null
         }));
     };
 

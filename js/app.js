@@ -477,7 +477,25 @@ function myPlanName() {
 // ---------- Páginas do personal ----------
 const statusBadge = s => ({ Ativo: 'green', Atenção: 'orange', Pendente: 'red', Convidado: 'blue' }[s] || '');
 
-// editable: mostra o botão "Editar" (plano, objetivo e status) em cada linha
+// Mesma data com outro dia do mês (31 vira o último dia em meses curtos)
+function withDay(iso, day) {
+    const [y, m] = iso.split('-').map(Number);
+    const last = new Date(y, m, 0).getDate();
+    return `${iso.slice(0, 8)}${String(Math.min(day, last)).padStart(2, '0')}`;
+}
+
+// Próximo vencimento em aberto; com tudo pago, o dia do mês das mensalidades
+// (definido pelo coach ou, se não houver, o da última cobrança)
+function studentDue(s) {
+    const mine = state.invoices.filter(i => i.student === s.name).sort((a, b) => a.due.localeCompare(b.due));
+    const open = mine.find(i => !i.paidAt);
+    if (open) return fmtDate(open.due, { day: '2-digit', month: '2-digit' });
+    if (s.firstDue) return fmtDate(s.firstDue, { day: '2-digit', month: '2-digit' });
+    const day = s.dueDay || (mine.length ? +mine.at(-1).due.slice(8, 10) : null);
+    return day ? `todo dia ${day}` : '—';
+}
+
+// editable: mostra o botão "Editar" (plano, objetivo, status e vencimento) em cada linha
 function studentsTable(list, { editable = false } = {}) {
     return `<div class="table-wrap"><table>
         <thead><tr><th>Aluno</th><th>Plano</th><th>Objetivo</th><th>Aderência</th><th>Último treino</th><th>Vencimento</th><th>Status</th>${editable ? '<th></th>' : ''}</tr></thead>
@@ -485,7 +503,7 @@ function studentsTable(list, { editable = false } = {}) {
             <td><div class="cell-user"><div class="avatar" style="width:32px;height:32px;font-size:12px">${initials(s.name)}</div>${esc(s.name)}</div></td>
             <td>${s.plan}</td><td>${s.goal}</td>
             <td><div style="display:flex;align-items:center;gap:8px;min-width:120px"><div class="progress" style="flex:1"><span style="width:${s.adherence}%"></span></div>${s.adherence}%</div></td>
-            <td class="muted">${s.lastWorkout}</td><td>${s.due}</td>
+            <td class="muted">${s.lastWorkout}</td><td>${studentDue(s)}</td>
             <td><span class="badge ${statusBadge(s.status)}">${s.status}</span></td>
             ${editable ? `<td><button class="btn btn-sm" data-edit-student="${esc(s.name)}">Editar</button></td>` : ''}</tr>`).join('')}</tbody>
     </table></div>`;
@@ -496,6 +514,10 @@ function openStudentEditor(student) {
     if (!student) return;
     const invited = student.status === 'Convidado';
     const opts = (list, cur) => list.map(o => `<option ${o === cur ? 'selected' : ''}>${o}</option>`).join('');
+    // Cobranças ainda não pagas e que não venceram: mudam junto com o dia de vencimento
+    const openFuture = state.invoices.filter(i => i.student === student.name && !i.paidAt && i.due >= today);
+    const lastInv = state.invoices.filter(i => i.student === student.name).sort((a, b) => b.due.localeCompare(a.due))[0];
+    const currentDay = student.dueDay || (student.firstDue ? +student.firstDue.slice(8, 10) : lastInv ? +lastInv.due.slice(8, 10) : '');
     const m = modal(`
         <h3>${esc(student.name)}</h3>
         <p class="sub">${invited ? 'Convite ainda não aceito: o plano e o objetivo valem quando a conta for criada.' : 'Alterar plano, objetivo e status do aluno.'}</p>
@@ -504,6 +526,9 @@ function openStudentEditor(student) {
             <p class="muted small" id="plan-price"></p>
             <label class="field">Objetivo<select class="input" name="goal">${opts(['Hipertrofia', 'Emagrecimento', 'Condicionamento', 'Saúde'], student.goal)}</select></label>
             ${invited ? '' : `<label class="field">Status<select class="input" name="status">${opts(['Ativo', 'Atenção', 'Pendente', 'Inativo'], student.status)}</select></label>`}
+            <label class="field">Dia do vencimento (todo mês)
+                <input class="input" type="number" name="dueDay" min="1" max="31" step="1" value="${currentDay || ''}" placeholder="Ex.: 10"></label>
+            <p class="muted small" id="due-note">${openFuture.length ? `A cobrança em aberto (${openFuture.map(i => fmtDate(i.due, { day: '2-digit', month: '2-digit' })).join(', ')}) passa para o novo dia.` : 'Vale para as próximas mensalidades.'}</p>
             <p class="small down" id="edit-msg" hidden></p>
             <button class="btn btn-primary btn-block" type="submit">Salvar</button>
             <button class="btn btn-ghost btn-block" type="button" data-close>Cancelar</button>
@@ -513,13 +538,18 @@ function openStudentEditor(student) {
     f.plan.onchange = price; price();
     f.onsubmit = async e => {
         e.preventDefault();
-        const data = { plan: f.plan.value, goal: f.goal.value, status: invited ? student.status : f.status.value };
+        const dueDay = f.dueDay.value ? Math.round(+f.dueDay.value) : null;
+        if (dueDay !== null && (dueDay < 1 || dueDay > 31)) return toast('O dia do vencimento vai de 1 a 31.');
+        const data = { plan: f.plan.value, goal: f.goal.value, status: invited ? student.status : f.status.value, dueDay };
         const btn = f.querySelector('button[type=submit]');
         btn.disabled = true;
         try {
             if (Backend.enabled) await Backend.updateStudent(student, data);
             else { Object.assign(student, data); store.set('students', SEED.students); }
-            toast('Aluno atualizado!');
+            // Cobranças em aberto acompanham o novo dia
+            const moved = dueDay && dueDay !== currentDay ? openFuture.filter(i => { const d = withDay(i.due, dueDay); const ch = d !== i.due; i.due = d; return ch; }) : [];
+            if (moved.length) save();
+            toast(moved.length ? `Aluno atualizado! ${moved.length === 1 ? 'A cobrança em aberto agora vence' : 'As cobranças em aberto agora vencem'} no dia ${dueDay}.` : 'Aluno atualizado!');
             route();
         } catch (err) {
             const msg = m.querySelector('#edit-msg'); msg.hidden = false; msg.textContent = err.message;
@@ -561,8 +591,10 @@ const trainerPages = {
                     ${Backend.enabled ? '<label class="field">E-mail<input class="input" type="email" name="email" required autocomplete="off"></label>' : ''}
                     <label class="field">Plano<select class="input" name="plan">${planOpts}</select></label>
                     <label class="field">Objetivo<select class="input" name="goal">${goalOpts}</select></label>
+                    <label class="field">1º vencimento<input class="input" type="date" name="due" value="${today}" required></label>
                     <button class="btn btn-primary" type="submit">${Backend.enabled ? 'Cadastrar e enviar convite' : 'Adicionar'}</button>
                 </form>
+                <p class="muted small" id="due-hint" style="margin-top:10px"></p>
                 <p class="small" id="invite-msg" hidden></p>
             </div>`;
         },
@@ -579,19 +611,30 @@ const trainerPages = {
             bindEditButtons();
             search.oninput = update; filter.onchange = update;
             const f = view.querySelector('#student-form');
+            // Mostra o que vai acontecer: valor da 1ª mensalidade e o dia das próximas
+            const hint = () => {
+                const due = f.due.value;
+                view.querySelector('#due-hint').textContent = due
+                    ? `1ª mensalidade de ${money(SEED.planPrices[f.plan.value])} vence em ${fmtFull(due)}. As próximas vencem todo dia ${+due.slice(8, 10)}.` : '';
+            };
+            f.due.oninput = f.plan.onchange = hint; hint();
             f.onsubmit = async e => {
                 e.preventDefault();
                 const data = { name: f.name.value.trim(), plan: f.plan.value, goal: f.goal.value };
+                const due = f.due.value, dueDay = +due.slice(8, 10), amount = SEED.planPrices[data.plan];
+                if (allStudentsForList().some(s => s.name.toLowerCase() === data.name.toLowerCase()))
+                    return toast('Já existe um aluno com esse nome.');
                 if (!Backend.enabled) {
-                    SEED.students.push({ ...data, adherence: 0, lastWorkout: '—', status: 'Pendente', due: '—' });
-                    store.set('students', SEED.students);
-                    toast('Aluno cadastrado!'); route();
+                    SEED.students.push({ ...data, dueDay, adherence: 0, lastWorkout: '—', status: 'Pendente', due: '—' });
+                    state.invoices.push({ id: newId('inv'), student: data.name, plan: data.plan, amount, due, paidAt: null, method: null });
+                    store.set('students', SEED.students); save();
+                    toast(`Aluno cadastrado! 1ª mensalidade vence em ${fmtFull(due)}.`); route();
                     return;
                 }
                 const btn = f.querySelector('button'), msg = view.querySelector('#invite-msg');
                 btn.disabled = true;
                 try {
-                    const mailError = await Backend.inviteStudent({ ...data, email: f.email.value });
+                    const mailError = await Backend.inviteStudent({ ...data, email: f.email.value, dueDay, firstDue: due, firstAmount: amount });
                     if (!mailError) { toast(`Convite enviado para ${f.email.value.trim()}`); route(); return; }
                     // O convite ficou salvo; só o e-mail falhou (ex.: limite de envios do Supabase)
                     route();

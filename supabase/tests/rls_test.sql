@@ -168,6 +168,26 @@ select t_assert((select count(*) from daily_logs) = 0 and (select count(*) from 
 select set_config('request.jwt.claim.sub', :'coach', false);
 select t_assert((select meals_done from daily_logs where student_id = :'ana') = '{0,1}', 'coach acompanha o registro do dia da aluna');
 reset role;
+-- ===== Vencimento definido pelo coach (0008) =====
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'coach', false);
+insert into student_invites (email, full_name, plan, goal, invited_by, due_day, first_due, first_amount)
+  values ('davi@exemplo.com', 'Davi Melo', 'Premium', 'Hipertrofia', :'coach', 15, current_date + 8, 299);
+reset role;
+insert into auth.users (id, email) values ('66666666-6666-6666-6666-666666666666', 'davi@exemplo.com');
+select t_assert((select due_day from profiles where id = '66666666-6666-6666-6666-666666666666') = 15, 'perfil nasce com o dia de vencimento do convite');
+select t_assert((select count(*) from invoices where student_id = '66666666-6666-6666-6666-666666666666' and amount = 299 and due = current_date + 8) = 1,
+                '1ª cobrança criada com a data e o valor do cadastro');
+set role authenticated;
+select set_config('request.jwt.claim.sub', :'ana', false);
+select t_denied(format($$update profiles set due_day = 28 where id = %L$$, :'ana'), 'aluna não muda o próprio vencimento');
+update profiles set phone = '11977776666' where id = :'ana';
+select t_assert((select phone from profiles where id = :'ana') = '11977776666', 'aluna continua editando o telefone');
+select set_config('request.jwt.claim.sub', :'coach', false);
+update profiles set due_day = 5 where id = :'ana';
+select t_assert((select due_day from profiles where id = :'ana') = 5, 'coach muda o dia de vencimento');
+select t_denied(format($$update profiles set due_day = 32 where id = %L$$, :'ana'), 'dia de vencimento inválido é recusado');
+reset role;
 -- ===== Despesas (0005) =====
 set role authenticated;
 select set_config('request.jwt.claim.sub', :'coach', false);
