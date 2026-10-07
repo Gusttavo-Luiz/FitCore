@@ -69,6 +69,8 @@ Tudo fica na raiz do repositório; cada tela nova da área logada tem seu própr
 | `supabase/migrations/0005_expenses.sql` | — | Despesas do coach (Financeiro) |
 | `supabase/migrations/0006_assessment_review.sql` | — | Envio de fotos pelo aluno e avaliação pelo coach (status, comentário, medidas opcionais) |
 | `supabase/migrations/0007_diet.sql` | — | Dieta de cada aluno (`diet_plans`) e registro diário de água e refeições (`daily_logs`) |
+| `supabase/setup.sql` | — | Instalação completa do banco num arquivo só (junta as migrações 0001 a 0009) |
+| `supabase/check.sql` | — | Conferência da instalação: mostra ✅ ou ❌ para tabelas, regras de acesso, fotos, chat, planos, coach e pg_cron |
 | `supabase/migrations/0009_plans_billing.sql` | — | Planos com preço no banco (`plans`), função que gera as mensalidades do mês e agendamento todo dia 1º (pg_cron) |
 | `supabase/migrations/0008_due_day.sql` | — | Dia de vencimento do aluno, definido pelo coach no cadastro; 1ª cobrança criada quando o aluno aceita o convite |
 | `js/features/chat.js` | — | Telas do chat com o Supabase (lista de conversas, tempo real, não lidas) |
@@ -324,6 +326,7 @@ Todas as mudanças foram feitas em 06/10/2026, na ordem abaixo (mais recente pri
 
 | # | Commit | Mudança |
 | --- | --- | --- |
+| 31 | `PENDING` | Instalação do banco num arquivo só (`supabase/setup.sql`) e consulta de conferência (`supabase/check.sql`); guia atualizado |
 | 30 | `a6c4d5a` | Planos e preços no banco (nova aba Financeiro → Planos e preços: editar preço, criar e remover plano) e mensalidades geradas automaticamente todo dia 1º (migração 0009); Pagamentos do aluno mostra o plano do perfil |
 | 29 | `ac61eb6` | Vencimento definido pelo coach: campo "1º vencimento" no cadastro (cria a 1ª mensalidade), dia do vencimento editável em Editar (cobranças em aberto acompanham), mensalidades em lote usam esse dia; migração 0008 |
 | 28 | `d91d6f3` | Dieta no banco: o coach monta o plano alimentar de cada aluno (nova tela Dietas) e o aluno registra água e refeições do dia; migração 0007 com regras de acesso e testes |
